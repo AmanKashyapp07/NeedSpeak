@@ -6,10 +6,7 @@ import LoadingState from '../common/LoadingState';
 export default function CartPanel({ cart, unavailableItems, totalPrice, budgetExceeded, budget, isLoading, loadingStep, isEmpty }) {
   if (isLoading) {
     return (
-      <div
-        className="h-full flex flex-col p-6 overflow-y-auto"
-        style={{ borderRight: '1px solid var(--color-border)' }}
-      >
+      <div className="glass-panel h-full flex flex-col p-6 overflow-y-auto">
         <LoadingState currentStep={loadingStep} />
       </div>
     );
@@ -17,70 +14,50 @@ export default function CartPanel({ cart, unavailableItems, totalPrice, budgetEx
 
   if (isEmpty) {
     return (
-      <div
-        className="h-full flex flex-col items-center justify-center p-6 text-center"
-        style={{ borderRight: '1px solid var(--color-border)' }}
-      >
-        <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-          style={{ background: 'var(--color-bg-tertiary)' }}
-        >
-          <ShoppingCart size={24} style={{ color: 'var(--color-text-tertiary)' }} />
+      <div className="glass-panel h-full flex flex-col items-center justify-center p-8 text-center bg-white min-h-[400px]">
+        <div className="w-20 h-20 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mb-6 shadow-sm">
+          <ShoppingCart size={32} className="text-slate-400" />
         </div>
-        <h3 className="text-[15px] font-semibold text-text-primary mb-1">Your cart is empty</h3>
-        <p className="text-[13px] text-text-secondary max-w-[280px] leading-relaxed">
-          Paste a recipe or shopping list on the left to get started.
+        <h3 className="text-xl font-semibold text-slate-800 mb-2">Your Cart is Empty</h3>
+        <p className="text-sm text-slate-500 max-w-sm">
+          Paste a recipe, shopping list, or URL above to automatically build your cart.
         </p>
       </div>
     );
   }
 
   return (
-    <div
-      className="h-full flex flex-col overflow-hidden"
-      style={{ borderRight: '1px solid var(--color-border)' }}
-    >
+    <div className="glass-panel h-full flex flex-col p-6 overflow-hidden bg-white">
       {/* Header */}
-      <div
-        className="flex items-center justify-between px-5 py-4 shrink-0"
-        style={{ borderBottom: '1px solid var(--color-border)' }}
-      >
-        <div className="flex items-center gap-2.5">
-          <h2 className="text-[15px] font-semibold text-text-primary">Cart</h2>
-          <span
-            className="text-[11px] font-medium px-1.5 py-0.5 rounded"
-            style={{ background: 'var(--color-accent-soft)', color: 'var(--color-accent)' }}
-          >
-            {cart?.length || 0}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Your Cart</h2>
+          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-accent/10 text-accent border border-accent/20">
+            {cart?.length || 0} items
           </span>
         </div>
-        <span className="text-[15px] font-semibold" style={{ color: 'var(--color-accent)' }}>
-          ₹{totalPrice}
-        </span>
+        <p className="text-2xl font-bold text-slate-900 tracking-tight">Rs. {totalPrice}</p>
       </div>
 
       {/* Budget bar */}
       {budget && (
-        <div className="px-5 py-3 shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
-          <div className="flex items-center justify-between text-[11px] mb-2">
-            <span className="flex items-center gap-1" style={{ color: 'var(--color-text-tertiary)' }}>
-              <TrendingDown size={11} /> Budget
+        <div className="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
+          <div className="flex items-center justify-between text-sm mb-2">
+            <span className="text-slate-600 flex items-center gap-1.5 font-medium">
+              <TrendingDown size={16} className="text-slate-400" /> Budget
             </span>
-            <span
-              className="font-medium"
-              style={{ color: budgetExceeded ? 'var(--color-danger)' : 'var(--color-success)' }}
-            >
-              ₹{totalPrice} / ₹{budget}
+            <span className={`font-semibold ${budgetExceeded ? 'text-danger' : 'text-success'}`}>
+              Rs. {totalPrice} / Rs. {budget}
             </span>
           </div>
-          <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--color-bg-tertiary)' }}>
+          <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min((totalPrice / budget) * 100, 100)}%` }}
               transition={{ duration: 0.8, ease: 'easeOut' }}
               className="h-full rounded-full"
               style={{
-                background: budgetExceeded ? 'var(--color-danger)' : 'var(--color-success)',
+                backgroundColor: budgetExceeded ? 'var(--color-danger)' : 'var(--color-success)',
               }}
             />
           </div>
@@ -88,7 +65,7 @@ export default function CartPanel({ cart, unavailableItems, totalPrice, budgetEx
       )}
 
       {/* Cart items */}
-      <div className="flex-1 overflow-y-auto px-5 py-3">
+      <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
         <AnimatePresence mode="popLayout">
           {cart?.map((item, i) => (
             <CartItem key={`${item.sku}-${i}`} item={item} index={i} />
@@ -98,37 +75,34 @@ export default function CartPanel({ cart, unavailableItems, totalPrice, budgetEx
 
       {/* Unavailable items */}
       {unavailableItems && unavailableItems.length > 0 && (
-        <div className="px-5 py-3 shrink-0" style={{ borderTop: '1px solid var(--color-border)' }}>
-          <div className="flex items-center gap-1.5 mb-2">
-            <AlertCircle size={12} style={{ color: 'var(--color-warning)' }} />
-            <span className="text-[11px] font-medium" style={{ color: 'var(--color-warning)' }}>
-              {unavailableItems.length} unavailable
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="mt-6 pt-5 border-t border-slate-200"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <AlertCircle size={16} className="text-warning" />
+            <span className="text-sm font-semibold text-slate-800">
+              {unavailableItems.length} item{unavailableItems.length > 1 ? 's' : ''} unavailable
             </span>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-2">
             {unavailableItems.map((item, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between text-[12px] px-3 py-2 rounded-lg"
-                style={{ background: 'var(--color-bg-tertiary)' }}
-              >
-                <span className="text-text-secondary capitalize">{item.name}</span>
-                <span className="text-text-tertiary">
+              <div key={i} className="flex items-center justify-between text-sm px-4 py-2.5 rounded-lg bg-orange-50 border border-orange-100/50">
+                <span className="text-slate-700 capitalize font-medium">{item.name}</span>
+                <span className="text-orange-600/80 text-xs font-semibold uppercase tracking-wider">
                   {item.reason === 'not_in_catalog' ? 'Not in catalog' : 'Out of stock'}
                 </span>
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
 
-      {/* Total */}
-      <div
-        className="px-5 py-3 flex items-center justify-between shrink-0"
-        style={{ borderTop: '1px solid var(--color-border)' }}
-      >
-        <span className="text-[13px] text-text-secondary">Total ({cart?.length} items)</span>
-        <span className="text-[17px] font-semibold text-text-primary">₹{totalPrice}</span>
+      {/* Total bar */}
+      <div className="mt-6 pt-5 flex items-center justify-between border-t border-slate-200">
+        <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Total ({cart?.length} items)</span>
+        <span className="text-3xl font-bold text-slate-900 tracking-tight">Rs. {totalPrice}</span>
       </div>
     </div>
   );

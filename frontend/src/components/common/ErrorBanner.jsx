@@ -6,24 +6,16 @@ export default function ErrorBanner({ error, onDismiss }) {
     <AnimatePresence>
       {error && (
         <motion.div
-          initial={{ opacity: 0, y: -8 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl"
-          style={{
-            background: 'rgba(204, 117, 117, 0.08)',
-            border: '1px solid rgba(204, 117, 117, 0.15)',
-          }}
+          exit={{ opacity: 0, y: -10 }}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl mb-4 bg-red-50 border border-red-200 shadow-sm"
         >
-          <AlertTriangle size={15} style={{ color: 'var(--color-danger)', flexShrink: 0 }} />
-          <p className="text-[13px] flex-1" style={{ color: 'var(--color-danger)' }}>{error}</p>
+          <AlertTriangle size={18} className="text-red-600 shrink-0" />
+          <p className="text-sm text-red-800 font-medium flex-1">{error}</p>
           {onDismiss && (
-            <button
-              onClick={onDismiss}
-              className="shrink-0 p-0.5 rounded transition-colors duration-100"
-              style={{ color: 'var(--color-danger)', opacity: 0.5 }}
-            >
-              <X size={14} />
+            <button onClick={onDismiss} className="text-red-500 hover:text-red-700 hover:bg-red-100 p-1.5 rounded-md transition-colors">
+              <X size={16} />
             </button>
           )}
         </motion.div>

@@ -1,37 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  /* ── Warm dark foundation (Claude-inspired) ────────── */
-  --color-bg-primary: #1A1915;
-  --color-bg-secondary: #21201C;
-  --color-bg-tertiary: #2A2924;
-  --color-bg-hover: #32312B;
-  --color-bg-input: #16150F;
-
-  /* ── Accent — warm sand/terracotta ─────────────────── */
-  --color-accent: #C4956A;
-  --color-accent-soft: rgba(196, 149, 106, 0.12);
-  --color-accent-hover: #D4A67A;
-
-  /* ── Text hierarchy ────────────────────────────────── */
-  --color-text-primary: #ECECEA;
-  --color-text-secondary: #A5A29C;
-  --color-text-tertiary: #6F6C66;
-  --color-text-inverse: #1A1915;
-
-  /* ── Semantic ──────────────────────────────────────── */
-  --color-success: #7DB87D;
-  --color-danger: #CC7575;
-  --color-warning: #C4A84A;
-
-  /* ── Borders ───────────────────────────────────────── */
-  --color-border: rgba(255, 255, 255, 0.07);
-  --color-border-strong: rgba(255, 255, 255, 0.12);
-
+  --color-bg-deep: #F8FAFC;
+  --color-bg-base: #F1F5F9;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-hover: #F1F5F9;
+  --color-accent: #10B981;
+  --color-accent-hover: #059669;
+  --color-accent-glow: rgba(16, 185, 129, 0.1);
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748B;
+  --color-success: #10B981;
+  --color-danger: #EF4444;
+  --color-warning: #F59E0B;
+  --color-border: #E2E8F0;
+  --color-glass: #FFFFFF;
+  
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
 }
 
-/* ── Reset ──────────────────────────────────────────── */
+/* Base styles */
 * {
   margin: 0;
   padding: 0;
@@ -40,32 +31,51 @@
 
 html, body, #root {
   height: 100%;
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-bg-deep);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Scrollbar (thin, subtle) ───────────────────────── */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
 ::-webkit-scrollbar-thumb {
-  background: var(--color-bg-hover);
-  border-radius: 99px;
+  background: #CBD5E1;
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-tertiary);
+  background: #94A3B8;
 }
 
-/* ── Card ────────────────────────────────────────────── */
-.card {
-  background: var(--color-bg-secondary);
+/* Solid panel effect (Clean UI) */
+.glass-panel {
+  background: var(--color-bg-surface);
   border: 1px solid var(--color-border);
   border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  transition: all 300ms ease;
 }
 
-/* ── Skeleton loading ───────────────────────────────── */
+/* Gradient text - clean */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-accent) 0%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Fluid animations */
+.fluid-transition {
+  transition: all 300ms ease;
+}
+
+/* Shimmer effect for skeleton loading */
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
@@ -73,19 +83,13 @@ html, body, #root {
 .skeleton {
   position: relative;
   overflow: hidden;
-  background: var(--color-bg-tertiary);
-  border-radius: 10px;
+  background: #E2E8F0;
+  border-radius: 8px;
 }
 .skeleton::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.03), transparent);
-  animation: shimmer 2s infinite;
-}
-
-/* ── Selection ──────────────────────────────────────── */
-::selection {
-  background: var(--color-accent-soft);
-  color: var(--color-text-primary);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.5s infinite;
 }

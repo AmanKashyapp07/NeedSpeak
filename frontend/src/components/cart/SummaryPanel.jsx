@@ -1,112 +1,119 @@
 import { motion } from 'framer-motion';
 import { Brain, Tag, Package, AlertTriangle, IndianRupee, ChefHat, Wrench, BookOpen, Pill, ShoppingBag } from 'lucide-react';
 
-const intentConfig = {
-  recipe:   { icon: ChefHat,     label: 'Recipe',   color: '#C4956A' },
-  diy:      { icon: Wrench,      label: 'DIY',      color: '#8BA4B8' },
-  supplies: { icon: BookOpen,    label: 'Supplies', color: '#A68BC4' },
-  medical:  { icon: Pill,        label: 'Medical',  color: '#C48B8B' },
-  general:  { icon: ShoppingBag, label: 'General',  color: '#7DB87D' },
+const intentIcons = {
+  recipe: ChefHat,
+  diy: Wrench,
+  supplies: BookOpen,
+  medical: Pill,
+  general: ShoppingBag,
+};
+
+const intentColors = {
+  recipe: 'text-amber-600 bg-amber-50 border-amber-200',
+  diy: 'text-blue-600 bg-blue-50 border-blue-200',
+  supplies: 'text-purple-600 bg-purple-50 border-purple-200',
+  medical: 'text-red-600 bg-red-50 border-red-200',
+  general: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+};
+
+const intentBgColors = {
+  recipe: 'bg-amber-100',
+  diy: 'bg-blue-100',
+  supplies: 'bg-purple-100',
+  medical: 'bg-red-100',
+  general: 'bg-emerald-100',
 };
 
 export default function SummaryPanel({ intentType, contextSummary, summary, cart, unavailableItems, totalPrice, isEmpty }) {
   if (isEmpty) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-6 text-center">
-        <div
-          className="w-12 h-12 rounded-xl flex items-center justify-center mb-3"
-          style={{ background: 'var(--color-bg-tertiary)' }}
-        >
-          <Brain size={22} style={{ color: 'var(--color-text-tertiary)' }} />
+      <div className="glass-panel h-full flex flex-col items-center justify-center p-8 text-center bg-white min-h-[400px]">
+        <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mb-5 shadow-sm">
+          <Brain size={28} className="text-slate-400" />
         </div>
-        <h3 className="text-[14px] font-semibold text-text-primary mb-1">Summary</h3>
-        <p className="text-[12px] text-text-secondary max-w-[180px] leading-relaxed">
-          AI-generated insights will appear here after processing.
+        <h3 className="text-lg font-semibold text-slate-800 mb-2">AI Summary</h3>
+        <p className="text-sm text-slate-500 max-w-xs">
+          After processing your input, a detailed summary will appear here.
         </p>
       </div>
     );
   }
 
-  const config = intentConfig[intentType] || intentConfig.general;
-  const IntentIcon = config.icon;
+  const IntentIcon = intentIcons[intentType] || ShoppingBag;
+  const colorClasses = intentColors[intentType] || intentColors.general;
+  const iconBgClass = intentBgColors[intentType] || intentBgColors.general;
+  
   const itemsFound = cart?.length || 0;
   const itemsUnavailable = unavailableItems?.length || 0;
   const substituted = cart?.filter(i => i.substituted)?.length || 0;
 
   return (
-    <div className="h-full flex flex-col overflow-y-auto">
-      {/* Intent */}
-      <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--color-border)' }}>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex items-center gap-3"
-        >
-          <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: `${config.color}14` }}
-          >
-            <IntentIcon size={16} style={{ color: config.color }} />
-          </div>
-          <div>
-            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: config.color }}>
-              {config.label}
-            </span>
-            <p className="text-[13px] text-text-primary mt-0.5 leading-snug">{contextSummary}</p>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Summary */}
-      {summary && (
-        <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--color-border)' }}>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
-              AI Summary
-            </h3>
-            <p className="text-[13px] text-text-primary leading-relaxed">{summary}</p>
-          </motion.div>
+    <div className="glass-panel h-full flex flex-col p-6 overflow-y-auto gap-6 bg-white">
+      {/* Intent badge */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`flex items-start gap-4 p-5 rounded-2xl border shadow-sm ${colorClasses}`}
+      >
+        <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center ${iconBgClass}`}>
+          <IntentIcon size={24} className="opacity-80" />
         </div>
+        <div>
+          <span className="text-[11px] font-bold uppercase tracking-widest opacity-80 mb-1 block">
+            {intentType}
+          </span>
+          <p className="text-sm font-medium text-slate-900 leading-relaxed">{contextSummary}</p>
+        </div>
+      </motion.div>
+
+      {/* AI Summary */}
+      {summary && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-slate-50 p-5 rounded-2xl border border-slate-100"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Brain size={16} className="text-accent" />
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">AI Summary</h3>
+          </div>
+          <p className="text-sm text-slate-700 leading-relaxed font-medium">{summary}</p>
+        </motion.div>
       )}
 
       {/* Stats */}
-      <div className="px-5 py-4">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="space-y-3"
-        >
-          <StatRow icon={Package} label="Items found" value={itemsFound} />
-          <StatRow icon={AlertTriangle} label="Unavailable" value={itemsUnavailable} warn={itemsUnavailable > 0} />
-          <StatRow icon={Tag} label="Substituted" value={substituted} />
-          <StatRow icon={IndianRupee} label="Total cost" value={`₹${totalPrice}`} accent />
-        </motion.div>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="grid grid-cols-2 gap-4"
+      >
+        <StatCard icon={Package} label="Items Found" value={itemsFound} colorClass="text-emerald-600" />
+        <StatCard icon={AlertTriangle} label="Unavailable" value={itemsUnavailable} colorClass={itemsUnavailable > 0 ? 'text-amber-600' : 'text-emerald-600'} />
+        <StatCard icon={Tag} label="Substituted" value={substituted} colorClass={substituted > 0 ? 'text-blue-600' : 'text-emerald-600'} />
+        <StatCard icon={IndianRupee} label="Total Cost" value={`Rs. ${totalPrice}`} colorClass="text-emerald-600" />
+      </motion.div>
 
-      {/* Footer */}
-      <div className="mt-auto px-5 py-3" style={{ borderTop: '1px solid var(--color-border)' }}>
-        <p className="text-[10px] text-text-tertiary text-center">
-          Powered by Amazon Bedrock · Claude Sonnet 4.6
+      {/* Powered by */}
+      <div className="mt-auto pt-6 border-t border-slate-100">
+        <p className="text-[11px] font-medium text-slate-400 text-center uppercase tracking-widest">
+          Powered by Amazon Bedrock
         </p>
       </div>
     </div>
   );
 }
 
-function StatRow({ icon: Icon, label, value, warn, accent }) {
+function StatCard({ icon: Icon, label, value, colorClass }) {
   return (
-    <div className="flex items-center justify-between py-1">
-      <div className="flex items-center gap-2">
-        <Icon size={13} style={{ color: warn ? 'var(--color-warning)' : 'var(--color-text-tertiary)' }} />
-        <span className="text-[12px] text-text-secondary">{label}</span>
+    <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300">
+      <div className="flex items-center gap-2 mb-2">
+        <Icon size={14} className={colorClass} />
+        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</span>
       </div>
-      <span
-        className="text-[13px] font-medium"
-        style={{ color: accent ? 'var(--color-accent)' : warn ? 'var(--color-warning)' : 'var(--color-text-primary)' }}
-      >
-        {value}
-      </span>
+      <p className="text-2xl font-bold text-slate-900 tracking-tight">{value}</p>
     </div>
   );
 }
