@@ -68,6 +68,8 @@ class ExtractionResult(BaseModel):
     intent_type: IntentType = IntentType.GENERAL
     context_summary: str = ""
     servings: Optional[int] = None
+    confidence: str = "high"
+    clarification_question: Optional[str] = None
     items: list[ExtractedItem] = Field(default_factory=list)
     error: Optional[str] = None
 
@@ -106,6 +108,8 @@ class ParseResponse(BaseModel):
     session_id: str
     intent_type: IntentType
     context_summary: str
+    confidence: str = "high"
+    clarification_question: Optional[str] = None
     cart: list[CartItem]
     unavailable_items: list[UnavailableItem] = Field(default_factory=list)
     total_price_inr: float
@@ -139,6 +143,8 @@ class SessionRecord(BaseModel):
     raw_input_s3_key: Optional[str] = None
     intent_type: Optional[IntentType] = None
     context_summary: Optional[str] = None
+    confidence: Optional[str] = None
+    clarification_question: Optional[str] = None
     extracted_items: Optional[list[dict]] = None
     cart_items: Optional[list[dict]] = None
     unavailable_items: Optional[list[dict]] = None

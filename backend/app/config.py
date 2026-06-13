@@ -43,3 +43,10 @@ S3_BUCKET = os.getenv("S3_BUCKET", "pulse-cart-sessions-shivam-2026")
 #   - .env file:             MOCK_MODE=1
 #   - Frontend hidden toggle (sends X-Mock-Mode: 1 header)
 MOCK_MODE = os.getenv("MOCK_MODE", "0").strip().lower() in ("1", "true", "yes")
+
+# ---------------------------------------------------------------------------
+# Google Gemini API
+# ---------------------------------------------------------------------------
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL_ID = os.getenv("GEMINI_MODEL_ID", "gemini-2.5-flash")
+

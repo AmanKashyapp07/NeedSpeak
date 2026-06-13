@@ -208,7 +208,7 @@ async def parse_content(req: ParseRequest, request: Request):
                 },
             )
 
-        if not extraction.items:
+        if not extraction.items and extraction.confidence != "low":
             raise HTTPException(
                 status_code=400,
                 detail={
@@ -247,6 +247,8 @@ async def parse_content(req: ParseRequest, request: Request):
             session_id=session_id,
             intent_type=extraction.intent_type,
             context_summary=extraction.context_summary,
+            confidence=extraction.confidence,
+            clarification_question=extraction.clarification_question,
             cart=[item for item in cart_items],
             unavailable_items=[item for item in unavailable_items],
             total_price_inr=total_price,
@@ -261,6 +263,8 @@ async def parse_content(req: ParseRequest, request: Request):
             "input_type": req.input_type.value,
             "intent_type": extraction.intent_type.value,
             "context_summary": extraction.context_summary,
+            "confidence": extraction.confidence,
+            "clarification_question": extraction.clarification_question,
             "extracted_items": [item.model_dump() for item in extraction.items],
             "cart_items": [item.model_dump() for item in cart_items],
             "unavailable_items": [item.model_dump() for item in unavailable_items],

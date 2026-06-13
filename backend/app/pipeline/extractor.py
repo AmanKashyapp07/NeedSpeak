@@ -13,10 +13,11 @@ import re
 from typing import Optional
 
 import boto3
+from google import genai
+from google.genai import types
 
-from app.config import AWS_REGION, BEDROCK_MODEL_ID, MOCK_MODE
+from app.config import AWS_REGION, BEDROCK_MODEL_ID, MOCK_MODE, GEMINI_API_KEY, GEMINI_MODEL_ID
 from app.models import ExtractionResult, ExtractedItem, IntentType
-from app.pipeline.bedrock_client import get_bedrock_client
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,8 @@ RULES:
 8. Understand Hindi, Hinglish, and Indian English — many inputs will use these.
 9. For budget-constrained requests, extract the budget but still list all items normally.
 10. If the text mentions servings/people, set the servings field accordingly.
-11. DEDUPLICATE: Combine identical or similar ingredients (e.g. "onions" and "sliced onions") into a single entry with their quantities combined/summed. Do NOT list the same item multiple times for different recipe steps."""
+11. DEDUPLICATE: Combine identical or similar ingredients (e.g. "onions" and "sliced onions") into a single entry with their quantities combined/summed. Do NOT list the same item multiple times for different recipe steps.
+12. CONFIDENCE EVALUATION: Assess how confident you are in the user's intent. If the input is too vague or broad (e.g., "I need snacks for guests" without specifying what kind of gathering), set confidence to "low" and provide a helpful clarification_question (e.g., "Is this a sports gathering, a children's birthday, or a formal dinner?"). Otherwise, set confidence to "high" and clarification_question to null."""
 
 USER_PROMPT_TEMPLATE = """Extract the shopping list from this text.{servings_instruction}
 
@@ -51,6 +53,8 @@ Respond with JSON matching this exact schema:
   "intent_type": "recipe|diy|supplies|medical|general",
   "context_summary": "one sentence summary",
   "servings": null or number,
+  "confidence": "high|medium|low",
+  "clarification_question": "question string or null",
   "items": [
     {{
       "name": "item name in english, lowercase",
@@ -100,31 +104,21 @@ def _sanitize_json_response(raw: str) -> Optional[dict]:
 # ---------------------------------------------------------------------------
 # Core Extraction
 # ---------------------------------------------------------------------------
-def _call_bedrock(system_prompt: str, user_prompt: str) -> str:
-    """Invoke Bedrock with the given prompts, return raw text response."""
-    client = get_bedrock_client()
-
-    request_body = {
-        "anthropic_version": "bedrock-2023-05-31",
-        "max_tokens": 4096,
-        "temperature": 0.1,  # Low temperature for structured output
-        "system": system_prompt,
-        "messages": [
-            {
-                "role": "user",
-                "content": [{"type": "text", "text": user_prompt}],
-            }
-        ],
-    }
-
-    response = client.invoke_model(
-        modelId=BEDROCK_MODEL_ID,
-        body=json.dumps(request_body),
-        contentType="application/json",
+def _call_gemini(system_prompt: str, user_prompt: str) -> str:
+    """Invoke Gemini with the given prompts, return raw text response."""
+    client = genai.Client(api_key=GEMINI_API_KEY)
+    response = client.models.generate_content(
+        model=GEMINI_MODEL_ID,
+        contents=user_prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            response_mime_type="application/json",
+            temperature=0.1,
+        )
     )
-
-    response_body = json.loads(response["body"].read())
-    return response_body["content"][0]["text"]
+    if not response.text:
+        raise ValueError("Empty response from Gemini API")
+    return response.text
 
 
 def extract_items(
@@ -158,12 +152,12 @@ def extract_items(
     )
 
     # First attempt
-    logger.info("Calling Bedrock for extraction (attempt 1)...")
+    logger.info("Calling Gemini for extraction (attempt 1)...")
     try:
-        raw_response = _call_bedrock(SYSTEM_PROMPT, user_prompt)
+        raw_response = _call_gemini(SYSTEM_PROMPT, user_prompt)
     except Exception as e:
-        logger.error(f"Bedrock call failed: {e}")
-        return ExtractionResult(error="bedrock_timeout")
+        logger.error(f"Gemini call failed: {e}")
+        return ExtractionResult(error="extraction_failed")
 
     parsed = _sanitize_json_response(raw_response)
 
@@ -175,9 +169,9 @@ def extract_items(
             "No markdown fences. Just the raw JSON.\n\n" + user_prompt
         )
         try:
-            raw_response = _call_bedrock(SYSTEM_PROMPT, strict_prompt)
+            raw_response = _call_gemini(SYSTEM_PROMPT, strict_prompt)
         except Exception as e:
-            logger.error(f"Bedrock retry failed: {e}")
+            logger.error(f"Gemini retry failed: {e}")
             return ExtractionResult(error="extraction_failed")
 
         parsed = _sanitize_json_response(raw_response)
@@ -219,6 +213,8 @@ def extract_items(
         intent_type=intent_type,
         context_summary=parsed.get("context_summary", ""),
         servings=parsed.get("servings"),
+        confidence=parsed.get("confidence", "high"),
+        clarification_question=parsed.get("clarification_question"),
         items=items,
     )
 
@@ -254,7 +250,15 @@ def _get_mock_extraction(text: str) -> ExtractionResult:
     text_lower = text.lower()
 
     # Detect intent from keywords - check burger first to avoid 'masala' keyword collision
-    if any(w in text_lower for w in ["burger", "bun", "patty", "बर्गर", "tikki"]):
+    if any(w in text_lower for w in ["ambiguous", "snacks for guests", "vague"]):
+        return ExtractionResult(
+            intent_type=IntentType.GENERAL,
+            context_summary="Generic snacks request for guests",
+            confidence="low",
+            clarification_question="What kind of gathering is this? (e.g., sports night, kids birthday, formal dinner)",
+            items=[],
+        )
+    elif any(w in text_lower for w in ["burger", "bun", "patty", "बर्गर", "tikki"]):
         return ExtractionResult(
             intent_type=IntentType.RECIPE,
             context_summary="Veggie Burger recipe",
