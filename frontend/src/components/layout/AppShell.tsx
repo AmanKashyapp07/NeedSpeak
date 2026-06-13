@@ -36,7 +36,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center gap-2 shrink-0">
             <img src={logo} alt="NeedSpeak" className="h-8 w-8" />
-            <span className="text-lg font-semibold tracking-tight">NeedSpeak</span>
+            <span className="font-display text-xl font-semibold tracking-tight">NeedSpeak</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">

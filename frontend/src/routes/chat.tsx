@@ -381,7 +381,7 @@ function ChatPage() {
           <div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6">
             <div className="flex items-center gap-2 text-sm">
               <Sparkles className="h-4 w-4 text-brand" />
-              <span className="font-medium">Context-to-Cart</span>
+              <span className="font-display text-base font-semibold tracking-tight">Context-to-Cart</span>
               <span className="text-muted-foreground">· Describe it, paste it, drop it</span>
             </div>
             <button
@@ -516,7 +516,7 @@ function ChatPage() {
                 <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Live cart
                 </div>
-                <div className="mt-1 text-base font-semibold">{cartData.intent_type}</div>
+                <div className="mt-1 font-display text-lg font-semibold tracking-tight">{cartData.intent_type}</div>
                 <div className="mt-1 text-xs text-muted-foreground">{cartData.context_summary}</div>
                 <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
@@ -587,7 +587,7 @@ function ChatPage() {
               <div className="border-t border-border bg-background p-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Total</span>
-                  <span className="text-lg font-semibold">₹{computedTotal.toFixed(0)}</span>
+                  <span className="font-display text-2xl font-semibold tracking-tight">₹{computedTotal.toFixed(0)}</span>
                 </div>
                 {budgetInput && Number(budgetInput) > 0 && (
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface">
