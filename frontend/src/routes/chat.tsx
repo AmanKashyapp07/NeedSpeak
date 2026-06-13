@@ -366,8 +366,8 @@ function ChatPage() {
   };
 
   return (
-    <AppShell>
-      <div className="relative mx-auto grid h-[calc(100vh-4rem)] max-w-7xl grid-cols-1 lg:grid-cols-[1fr_440px]">
+    <AppShell noFooter>
+      <div className="relative grid h-full grid-cols-1 lg:grid-cols-[1fr_440px]">
 
         {/* Slide-in history panel */}
         <HistoryPanel

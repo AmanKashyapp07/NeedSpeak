@@ -12,7 +12,7 @@ const nav = [
   { to: "/collab/ipl-finals-10", label: "Collab" },
 ];
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children, noFooter = false }: { children: ReactNode; noFooter?: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { theme, toggle } = useTheme();
   const [historyCount, setHistoryCount] = useState(0);
@@ -31,8 +31,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+    <div className="flex h-screen flex-col overflow-hidden bg-background">
+      <header className="sticky top-0 z-40 shrink-0 border-b border-border/70 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center gap-2 shrink-0">
             <img src={logo} alt="NeedSpeak" className="h-8 w-8" />
@@ -93,17 +93,19 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1">{children}</main>
+      <main className="min-h-0 flex-1 overflow-auto">{children}</main>
 
-      <footer className="border-t border-border/70 py-8">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 text-sm text-muted-foreground sm:flex-row sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2">
-            <img src={logo} alt="" className="h-5 w-5 opacity-70" />
-            <span>NeedSpeak — context becomes cart.</span>
+      {!noFooter && (
+        <footer className="shrink-0 border-t border-border/70 py-8">
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 text-sm text-muted-foreground sm:flex-row sm:px-6 lg:px-8">
+            <div className="flex items-center gap-2">
+              <img src={logo} alt="" className="h-5 w-5 opacity-70" />
+              <span>NeedSpeak — context becomes cart.</span>
+            </div>
+            <span>Built for the hackathon</span>
           </div>
-          <span>Built for the hackathon</span>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 }
