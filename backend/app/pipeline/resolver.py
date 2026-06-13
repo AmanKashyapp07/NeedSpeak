@@ -15,10 +15,10 @@ import logging
 import math
 from typing import Optional
 
-from models import ExtractedItem, CartItem, UnavailableItem, UnavailableReason
-from unit_conversions import normalize_to_base_unit
-from db.dynamo import get_all_products
-from db.s3 import store_failed_match_log
+from app.models import ExtractedItem, CartItem, UnavailableItem, UnavailableReason
+from app.unit_conversions import normalize_to_base_unit
+from app.db.dynamo import get_all_products
+from app.db.s3 import store_failed_match_log
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ STOP_WORDS = {
     "best", "good", "with", "and", "or", "of", "for", "in", "to", "a", "an", "the"
 }
 
-def _keyword_overlap_match(item_name: str, products: list[dict], category: str = None) -> Optional[dict]:
+def _keyword_overlap_match(item_name: str, products: list[dict], category: Optional[str] = None) -> Optional[dict]:
     """
     Find the product with the highest keyword overlap with the item name.
     Requires a minimum matching threshold to avoid false positives.

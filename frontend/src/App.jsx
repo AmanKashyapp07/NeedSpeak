@@ -1,11 +1,11 @@
 import { useState, useCallback, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { ShoppingCart, Zap, Menu } from 'lucide-react';
-import InputPanel from './components/InputPanel';
-import CartPanel from './components/CartPanel';
-import SummaryPanel from './components/SummaryPanel';
-import ErrorBanner from './components/ErrorBanner';
-import { parseContent } from './api';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShoppingCart, Zap } from 'lucide-react';
+import InputPanel from './components/input/InputPanel';
+import CartPanel from './components/cart/CartPanel';
+import SummaryPanel from './components/cart/SummaryPanel';
+import ErrorBanner from './components/common/ErrorBanner';
+import { parseContent } from './services/api';
 
 export default function App() {
   const [cart, setCart] = useState(null);
@@ -43,13 +43,11 @@ export default function App() {
     setLoadingStep(0);
     setBudget(input.budget_inr || null);
 
-    // Simulate step progression
     const stepTimer1 = setTimeout(() => setLoadingStep(1), 1500);
     const stepTimer2 = setTimeout(() => setLoadingStep(2), 3000);
 
     try {
       const result = await parseContent(input, mockMode);
-
       setCart(result.cart || []);
       setUnavailableItems(result.unavailable_items || []);
       setTotalPrice(result.total_price_inr || 0);
@@ -71,46 +69,70 @@ export default function App() {
   const isEmpty = (!cart || cart.length === 0) && !isLoading;
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      {/* Top bar */}
-      <header className="flex items-center justify-between px-6 py-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--color-accent), #FF6B00)' }}>
-            <ShoppingCart size={16} className="text-bg-deep" />
+    <div className="h-screen flex flex-col overflow-hidden" style={{ background: 'var(--color-bg-primary)' }}>
+      {/* Header */}
+      <header
+        className="flex items-center justify-between px-5 h-12 shrink-0"
+        style={{ borderBottom: '1px solid var(--color-border)' }}
+      >
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{ background: 'var(--color-accent)' }}
+          >
+            <ShoppingCart size={14} color="#1A1915" strokeWidth={2.5} />
           </div>
-          <div>
-            <h1 className="text-sm font-bold text-text-primary flex items-center gap-1">
-              Context-to-Cart
-              <span className="text-[10px] font-normal px-1.5 py-0.5 rounded-full bg-accent/10 text-accent">v1.0</span>
-            </h1>
-            <p className="text-[10px] text-text-muted">Amazon Hackon 2026</p>
-          </div>
+          <span className="text-[13px] font-semibold text-text-primary tracking-[-0.01em]">
+            Context-to-Cart
+          </span>
+          <span
+            className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+            style={{
+              color: 'var(--color-text-tertiary)',
+              background: 'var(--color-bg-tertiary)',
+            }}
+          >
+            v1.0
+          </span>
         </div>
-        <div className="flex items-center gap-3">
-          {mockMode && (
-            <motion.span
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-[10px] px-2 py-1 rounded-full bg-warning/15 text-warning font-medium"
-            >
-              Mock Mode
-            </motion.span>
-          )}
-          <button onClick={handleMockToggle} className="text-text-muted hover:text-accent transition-colors" title="">
-            <Zap size={16} />
+
+        <div className="flex items-center gap-2.5">
+          <AnimatePresence>
+            {mockMode && (
+              <motion.span
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="text-[11px] font-medium px-2 py-1 rounded-md"
+                style={{
+                  color: 'var(--color-warning)',
+                  background: 'rgba(196, 168, 74, 0.1)',
+                  border: '1px solid rgba(196, 168, 74, 0.15)',
+                }}
+              >
+                Mock
+              </motion.span>
+            )}
+          </AnimatePresence>
+          <button
+            onClick={handleMockToggle}
+            className="p-1 rounded-md transition-colors duration-150"
+            style={{ color: 'var(--color-text-tertiary)' }}
+          >
+            <Zap size={14} />
           </button>
         </div>
       </header>
 
-      {/* Error banner */}
+      {/* Error */}
       {error && (
-        <div className="px-6 pt-3">
+        <div className="px-4 pt-3">
           <ErrorBanner error={error} onDismiss={() => setError(null)} />
         </div>
       )}
 
-      {/* Three-panel layout: responsive flex/grid */}
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-[380px_1fr] xl:grid-cols-[380px_1fr_320px] gap-4 p-4 overflow-y-auto xl:overflow-hidden">
+      {/* Main layout */}
+      <main className="flex-1 grid grid-cols-1 md:grid-cols-[380px_1fr] xl:grid-cols-[380px_1fr_300px] gap-0 overflow-hidden">
         <InputPanel onSubmit={handleSubmit} isLoading={isLoading} />
         <CartPanel
           cart={cart}

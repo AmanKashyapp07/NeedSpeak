@@ -1,0 +1,3 @@
+# Set the default behavior to have git automatically handle line endings.
+# This prevents Windows vs Mac line ending conflicts (LF vs CRLF).
+* text=auto

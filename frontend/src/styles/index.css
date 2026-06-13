@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Warm dark foundation (Claude-inspired) ────────── */
+  --color-bg-primary: #1A1915;
+  --color-bg-secondary: #21201C;
+  --color-bg-tertiary: #2A2924;
+  --color-bg-hover: #32312B;
+  --color-bg-input: #16150F;
+
+  /* ── Accent — warm sand/terracotta ─────────────────── */
+  --color-accent: #C4956A;
+  --color-accent-soft: rgba(196, 149, 106, 0.12);
+  --color-accent-hover: #D4A67A;
+
+  /* ── Text hierarchy ────────────────────────────────── */
+  --color-text-primary: #ECECEA;
+  --color-text-secondary: #A5A29C;
+  --color-text-tertiary: #6F6C66;
+  --color-text-inverse: #1A1915;
+
+  /* ── Semantic ──────────────────────────────────────── */
+  --color-success: #7DB87D;
+  --color-danger: #CC7575;
+  --color-warning: #C4A84A;
+
+  /* ── Borders ───────────────────────────────────────── */
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-border-strong: rgba(255, 255, 255, 0.12);
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ── Reset ──────────────────────────────────────────── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar (thin, subtle) ───────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-bg-hover);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}
+
+/* ── Card ────────────────────────────────────────────── */
+.card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+}
+
+/* ── Skeleton loading ───────────────────────────────── */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-bg-tertiary);
+  border-radius: 10px;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+  animation: shimmer 2s infinite;
+}
+
+/* ── Selection ──────────────────────────────────────── */
+::selection {
+  background: var(--color-accent-soft);
+  color: var(--color-text-primary);
+}

@@ -17,3 +17,9 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Reports
+a_reports/
+
+# IDEs
+.vscode/

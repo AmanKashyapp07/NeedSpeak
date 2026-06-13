@@ -16,7 +16,7 @@ from typing import Optional
 import boto3
 from boto3.dynamodb.conditions import Key
 
-from config import AWS_REGION, DYNAMODB_TABLE_PRODUCTS, DYNAMODB_TABLE_SESSIONS, MOCK_MODE
+from app.config import AWS_REGION, DYNAMODB_TABLE_PRODUCTS, DYNAMODB_TABLE_SESSIONS, MOCK_MODE
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ _product_cache: list[dict] = []
 _cache_loaded = False
 
 
-def load_all_products(mock_mode: bool = None) -> list[dict]:
+def load_all_products(mock_mode: Optional[bool] = None) -> list[dict]:
     """
     Load all products from DynamoDB into memory.
     With 80 items this is a single scan that completes in ~100ms.
@@ -95,7 +95,7 @@ def load_all_products(mock_mode: bool = None) -> list[dict]:
     return _product_cache
 
 
-def get_all_products(mock_mode: bool = None) -> list[dict]:
+def get_all_products(mock_mode: Optional[bool] = None) -> list[dict]:
     """Get all products, loading from DynamoDB if not cached."""
     is_mock = mock_mode if mock_mode is not None else MOCK_MODE
     if is_mock:
@@ -114,7 +114,7 @@ def refresh_product_cache() -> list[dict]:
     return load_all_products()
 
 
-def get_product_by_sku(sku: str, mock_mode: bool = None) -> Optional[dict]:
+def get_product_by_sku(sku: str, mock_mode: Optional[bool] = None) -> Optional[dict]:
     """Get a single product by SKU from cache."""
     products = get_all_products(mock_mode=mock_mode)
     for p in products:
@@ -126,7 +126,7 @@ def get_product_by_sku(sku: str, mock_mode: bool = None) -> Optional[dict]:
 # ---------------------------------------------------------------------------
 # Session CRUD
 # ---------------------------------------------------------------------------
-def save_session(session_data: dict, mock_mode: bool = None) -> None:
+def save_session(session_data: dict, mock_mode: Optional[bool] = None) -> None:
     """Save a session record to CartSessions table."""
     is_mock = mock_mode if mock_mode is not None else MOCK_MODE
     if is_mock:
@@ -140,7 +140,7 @@ def save_session(session_data: dict, mock_mode: bool = None) -> None:
     logger.info(f"Session saved: {session_data.get('session_id')}")
 
 
-def get_session(session_id: str, mock_mode: bool = None) -> Optional[dict]:
+def get_session(session_id: str, mock_mode: Optional[bool] = None) -> Optional[dict]:
     """Retrieve a session by ID."""
     is_mock = mock_mode if mock_mode is not None else MOCK_MODE
     if is_mock:
@@ -157,7 +157,7 @@ def get_session(session_id: str, mock_mode: bool = None) -> Optional[dict]:
 # ---------------------------------------------------------------------------
 # Health Check
 # ---------------------------------------------------------------------------
-def check_dynamodb_health(mock_mode: bool = None) -> bool:
+def check_dynamodb_health(mock_mode: Optional[bool] = None) -> bool:
     """Verify DynamoDB connectivity by describing the products table."""
     is_mock = mock_mode if mock_mode is not None else MOCK_MODE
     if is_mock:

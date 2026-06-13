@@ -13,9 +13,9 @@ from typing import Optional
 
 import boto3
 
-from config import AWS_REGION, BEDROCK_MODEL_ID, MOCK_MODE
-from models import CartItem, UnavailableItem
-from pipeline.bedrock_client import get_bedrock_client
+from app.config import AWS_REGION, BEDROCK_MODEL_ID, MOCK_MODE
+from app.models import CartItem, UnavailableItem
+from app.pipeline.bedrock_client import get_bedrock_client
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def generate_summary(
     total_price: float,
     budget_inr: Optional[int] = None,
     budget_exceeded: bool = False,
-    mock_mode: bool = None,
+    mock_mode: Optional[bool] = None,
 ) -> str:
     """
     Stage 3: Generate a plain English summary of the cart.

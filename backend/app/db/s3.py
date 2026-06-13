@@ -11,7 +11,7 @@ from typing import Optional
 
 import boto3
 
-from config import AWS_REGION, S3_BUCKET, MOCK_MODE
+from app.config import AWS_REGION, S3_BUCKET, MOCK_MODE
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ def _get_s3():
 # ---------------------------------------------------------------------------
 # Store / Retrieve
 # ---------------------------------------------------------------------------
-def store_raw_input(session_id: str, content: str, mock_mode: bool = None) -> Optional[str]:
+def store_raw_input(session_id: str, content: str, mock_mode: Optional[bool] = None) -> Optional[str]:
     """
     Store the raw input text to S3.
     Returns the S3 key, or None if in mock mode.
@@ -56,7 +56,7 @@ def store_raw_input(session_id: str, content: str, mock_mode: bool = None) -> Op
         return None
 
 
-def store_cart_result(session_id: str, cart_json: dict, mock_mode: bool = None) -> Optional[str]:
+def store_cart_result(session_id: str, cart_json: dict, mock_mode: Optional[bool] = None) -> Optional[str]:
     """
     Store the final cart JSON to S3.
     Returns the S3 key, or None if in mock mode.
@@ -81,7 +81,7 @@ def store_cart_result(session_id: str, cart_json: dict, mock_mode: bool = None) 
         return None
 
 
-def get_raw_input(session_id: str, mock_mode: bool = None) -> Optional[str]:
+def get_raw_input(session_id: str, mock_mode: Optional[bool] = None) -> Optional[str]:
     """Retrieve the raw input text from S3."""
     is_mock = mock_mode if mock_mode is not None else MOCK_MODE
     if is_mock:
@@ -96,7 +96,7 @@ def get_raw_input(session_id: str, mock_mode: bool = None) -> Optional[str]:
         return None
 
 
-def store_failed_match_log(item_name: str, session_id: str, mock_mode: bool = None) -> None:
+def store_failed_match_log(item_name: str, session_id: str, mock_mode: Optional[bool] = None) -> None:
     """
     Log a failed SKU match to S3 for post-run analysis.
     This helps identify missing keywords that should be added to the catalog.
@@ -122,7 +122,7 @@ def store_failed_match_log(item_name: str, session_id: str, mock_mode: bool = No
 # ---------------------------------------------------------------------------
 # Health Check
 # ---------------------------------------------------------------------------
-def check_s3_health(mock_mode: bool = None) -> bool:
+def check_s3_health(mock_mode: Optional[bool] = None) -> bool:
     """Verify S3 connectivity by checking the bucket exists."""
     is_mock = mock_mode if mock_mode is not None else MOCK_MODE
     if is_mock:

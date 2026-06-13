@@ -14,9 +14,9 @@ from typing import Optional
 
 import boto3
 
-from config import AWS_REGION, BEDROCK_MODEL_ID, MOCK_MODE
-from models import ExtractionResult, ExtractedItem, IntentType
-from pipeline.bedrock_client import get_bedrock_client
+from app.config import AWS_REGION, BEDROCK_MODEL_ID, MOCK_MODE
+from app.models import ExtractionResult, ExtractedItem, IntentType
+from app.pipeline.bedrock_client import get_bedrock_client
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +130,7 @@ def _call_bedrock(system_prompt: str, user_prompt: str) -> str:
 def extract_items(
     text: str,
     servings_override: Optional[int] = None,
-    mock_mode: bool = None,
+    mock_mode: Optional[bool] = None,
 ) -> ExtractionResult:
     """
     Stage 1: Extract a structured shopping list from raw text.

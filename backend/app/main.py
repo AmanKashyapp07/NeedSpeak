@@ -22,7 +22,7 @@ import uuid
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 import asyncio
-from fastapi.concurrency import run_in_threadpool
+from starlette.concurrency import run_in_threadpool
 
 from dotenv import load_dotenv
 
@@ -33,8 +33,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-import config
-from models import (
+from app import config
+from app.models import (
     ParseRequest,
     ParseResponse,
     ErrorResponse,
@@ -42,24 +42,24 @@ from models import (
     InputType,
     ErrorCode,
 )
-from pipeline.extractor import extract_items
-from pipeline.resolver import resolve_cart
-from pipeline.summarizer import generate_summary
-from ingestion.text_input import process_text_input
-from ingestion.url_fetcher import (
+from app.pipeline.extractor import extract_items
+from app.pipeline.resolver import resolve_cart
+from app.pipeline.summarizer import generate_summary
+from app.ingestion.text_input import process_text_input
+from app.ingestion.url_fetcher import (
     fetch_url_content,
     is_supported_url,
     is_youtube_url,
     get_unsupported_url_message,
 )
-from ingestion.youtube_fetcher import fetch_youtube_transcript
-from db.dynamo import (
+from app.ingestion.youtube_fetcher import fetch_youtube_transcript
+from app.db.dynamo import (
     load_all_products,
     save_session,
     get_session,
     check_dynamodb_health,
 )
-from db.s3 import store_raw_input, store_cart_result, check_s3_health
+from app.db.s3 import store_raw_input, store_cart_result, check_s3_health
 
 # ---------------------------------------------------------------------------
 # Logging
