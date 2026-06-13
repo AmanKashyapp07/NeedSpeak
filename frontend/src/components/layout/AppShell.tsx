@@ -16,6 +16,17 @@ export function AppShell({ children, noFooter = false }: { children: ReactNode; 
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { theme, toggle } = useTheme();
   const [historyCount, setHistoryCount] = useState(0);
+  const [auth, setAuth] = useState<{ token: string; user: any } | null>(null);
+
+  // Load auth from localStorage on client mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("needspeak-auth");
+      if (raw) {
+        setAuth(JSON.parse(raw));
+      }
+    } catch (e) {}
+  }, []);
 
   // Refresh cart badge count whenever the component mounts or window focuses
   useEffect(() => {
@@ -91,49 +102,39 @@ export function AppShell({ children, noFooter = false }: { children: ReactNode; 
             </Link>
 
             {/* User Auth */}
-            {(() => {
-              try {
-                const raw = localStorage.getItem("needspeak-auth");
-                if (raw) {
-                  const auth = JSON.parse(raw);
-                  if (auth && auth.user) {
-                    return (
-                      <div className="flex items-center gap-3 ml-2 border-l border-border pl-4">
-                        <div className="flex items-center gap-2">
-                          {auth.user.avatar_url ? (
-                            <img src={auth.user.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
-                          ) : (
-                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-xs font-medium text-brand-foreground">
-                              {auth.user.name?.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <span className="text-sm font-medium hidden md:inline-block">{auth.user.name}</span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            localStorage.removeItem("needspeak-auth");
-                            window.location.reload();
-                          }}
-                          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
-                        >
-                          Logout
-                        </button>
-                      </div>
-                    );
-                  }
-                }
-              } catch (e) {}
-              return (
-                <div className="ml-2 border-l border-border pl-4">
-                  <Link
-                    to="/login"
-                    className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-card px-4 text-sm font-medium transition-colors hover:bg-surface"
-                  >
-                    Sign in
-                  </Link>
+            {auth && auth.user ? (
+              <div className="flex items-center gap-3 ml-2 border-l border-border pl-4">
+                <div className="flex items-center gap-2">
+                  {auth.user.avatar_url ? (
+                    <img src={auth.user.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
+                  ) : (
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-xs font-medium text-brand-foreground">
+                      {auth.user.name?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-sm font-medium hidden md:inline-block">{auth.user.name}</span>
                 </div>
-              );
-            })()}
+                <button
+                  onClick={() => {
+                    localStorage.removeItem("needspeak-auth");
+                    setAuth(null);
+                    window.location.reload();
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className="ml-2 border-l border-border pl-4">
+                <Link
+                  to="/login"
+                  className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-card px-4 text-sm font-medium transition-colors hover:bg-surface"
+                >
+                  Sign in
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </header>

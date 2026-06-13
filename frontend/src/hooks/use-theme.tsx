@@ -5,12 +5,17 @@ type Theme = "light" | "dark";
 const STORAGE_KEY = "needspeak-theme";
 
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "light";
+  const [theme, setThemeState] = useState<Theme>("light");
+
+  // Load theme from localStorage on client mount
+  useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-    if (stored === "dark" || stored === "light") return stored;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  });
+    if (stored === "dark" || stored === "light") {
+      setThemeState(stored);
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      setThemeState("dark");
+    }
+  }, []);
 
   // Apply/remove the `.dark` class on <html> whenever theme changes.
   useEffect(() => {
