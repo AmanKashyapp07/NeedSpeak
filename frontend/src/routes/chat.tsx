@@ -90,6 +90,33 @@ function ChatPage() {
                   {m.role === "assistant" ? (
                     <MessageContent>
                       <MessageResponse>{m.text}</MessageResponse>
+                      
+                      {m.cartData && (
+                        <div className="mt-4 space-y-3 border-t border-border/40 pt-3">
+                          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Intent extracted</div>
+                          <pre className="overflow-x-auto rounded-lg bg-surface p-2.5 text-[11px] leading-relaxed text-foreground border border-border/30">
+{JSON.stringify(m.cartData.intents?.map((intent: any) => ({ intent: intent.intent_type, summary: intent.context_summary })), null, 2)}
+                          </pre>
+                          
+                          <div className="flex items-center justify-between pt-1">
+                            <span className="text-[10px] text-muted-foreground font-mono bg-surface px-1.5 py-0.5 rounded border border-border/20">
+                              ID: {m.cartData.session_id.slice(0, 8)}
+                            </span>
+                            {cartData?.session_id === m.cartData.session_id ? (
+                              <span className="inline-flex items-center gap-1 rounded bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand animate-pulse">
+                                Active Cart
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => setCartData(m.cartData)}
+                                className="rounded bg-muted px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:bg-foreground hover:text-background transition-all hover:scale-[1.02]"
+                              >
+                                Show Cart
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </MessageContent>
                   ) : (
                     <MessageContent>{m.text}</MessageContent>
@@ -101,19 +128,6 @@ function ChatPage() {
                 <Message from="assistant">
                   <MessageContent>
                     <Shimmer>Extracting intent…</Shimmer>
-                  </MessageContent>
-                </Message>
-              )}
-
-              {phase === "cart" && cartData && (
-                <Message from="assistant">
-                  <MessageContent>
-                    <div className="space-y-3">
-                      <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Intent extracted</div>
-                      <pre className="overflow-x-auto rounded-lg bg-surface p-3 text-xs leading-relaxed text-foreground">
-{JSON.stringify(cartData.intents?.map((i: any) => ({ intent: i.intent_type, summary: i.context_summary })), null, 2)}
-                      </pre>
-                    </div>
                   </MessageContent>
                 </Message>
               )}
