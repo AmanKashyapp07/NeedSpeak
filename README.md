@@ -20,13 +20,30 @@ python seed_catalog.py
 This writes 80 realistic Indian product SKUs to DynamoDB. Safe to re-run.
 
 ### 2. Configure Environment
-Edit `backend/.env`:
+Create a `.env` file in the `backend/` directory based on the following structure:
 ```env
-# CRITICAL: Set your Bedrock inference profile ID here
+# Active LLM Provider: choose 'gemini' or 'bedrock'
+LLM_PROVIDER=gemini
+
+# Google Gemini API Config (Required if LLM_PROVIDER=gemini)
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL_ID=gemini-2.5-flash
+
+# AWS Region (used for Bedrock, DynamoDB, S3 if LLM_PROVIDER=bedrock)
+AWS_REGION=us-east-1
+
+# Amazon Bedrock Model ID (Required if LLM_PROVIDER=bedrock)
 BEDROCK_MODEL_ID=anthropic.claude-sonnet-4-6
 
-# For demo safety — set to 1 to bypass all AI calls
-MOCK_MODE=0
+# DynamoDB Tables (Bypassed if MOCK_MODE=1)
+DYNAMODB_TABLE_PRODUCTS=ProductCatalog
+DYNAMODB_TABLE_SESSIONS=CartSessions
+
+# S3 Bucket (Bypassed if MOCK_MODE=1)
+S3_BUCKET=pulse-cart-sessions-shivam-2026
+
+# Mock Mode — Set to 1 to bypass all live calls (returns realistic dummy data)
+MOCK_MODE=1
 ```
 
 ### 3. Start the Backend
@@ -53,13 +70,13 @@ User Input (text/URL)
 [Ingestion Layer] -- text_input / url_fetcher / youtube_fetcher
     |
     v
-[Stage 1: Bedrock Extraction] -- Claude Sonnet 4.6 -> structured JSON
+[Stage 1: AI Intent Extraction] -- Gemini 2.5 Flash / Claude Sonnet 4.6 -> structured JSON
     |
     v
 [Stage 2: SKU Resolution] -- pure code, zero AI, keyword matching
     |
     v
-[Stage 3: Bedrock Summary] -- Claude Sonnet 4.6 -> plain English
+[Stage 3: AI Cart Summary] -- Gemini 2.5 Flash / Claude Sonnet 4.6 -> plain English
     |
     v
 Cart Response -> Frontend
@@ -96,6 +113,6 @@ Claude Sonnet 4.6 requires an inference profile in AWS Bedrock:
 | Frontend | React 18 + Vite 6 |
 | Styling | Tailwind CSS v4 |
 | Animations | Framer Motion |
-| AI | Amazon Bedrock (Claude Sonnet 4.6) |
-| Database | Amazon DynamoDB |
-| Storage | Amazon S3 |
+| AI | Google Gemini API (default) / Amazon Bedrock (Claude Sonnet 4.6) |
+| Database | Amazon DynamoDB (or local mock catalog) |
+| Storage | Amazon S3 (or local mock session storage) |
