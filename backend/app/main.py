@@ -250,13 +250,16 @@ async def parse_content(req: ParseRequest, request: Request):
 
         # ── Step 4: Summarize ───────────────────────────────────────────
         logger.info(f"[{session_id}] Generating summary...")
-        summary = generate_summary(
-            intent_groups=resolved_intent_groups,
-            total_price=global_total_price,
-            budget_inr=req.budget_inr,
-            budget_exceeded=global_budget_exceeded,
-            mock_mode=mock_mode,
-        )
+        if extraction.confidence == "low" and extraction.clarification_question:
+            summary = extraction.clarification_question
+        else:
+            summary = generate_summary(
+                intent_groups=resolved_intent_groups,
+                total_price=global_total_price,
+                budget_inr=req.budget_inr,
+                budget_exceeded=global_budget_exceeded,
+                mock_mode=mock_mode,
+            )
 
         # ── Step 5: Store session ───────────────────────────────────────
         response_data = ParseResponse(
