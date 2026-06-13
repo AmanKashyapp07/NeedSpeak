@@ -95,6 +95,8 @@ class CartItem(BaseModel):
     optional: bool = False
     substituted: bool = False
     substitution_reason: Optional[str] = None
+    pending_substitution: Optional[dict] = None
+    # Shape: {"name": str, "sku": str, "price_per_unit_inr": float, "reason": str}
     matched_from: list[str] = Field(default_factory=list)
 
 
