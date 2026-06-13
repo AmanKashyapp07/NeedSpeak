@@ -45,3 +45,12 @@ export function downloadCSV(data: ExportableCart, filename = "cart.csv") {
   a.click()
   URL.revokeObjectURL(url)
 }
+
+export async function copyWhatsAppToClipboard(data: ExportableCart): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(exportAsWhatsApp(data));
+    return true;
+  } catch {
+    return false;
+  }
+}
