@@ -248,28 +248,31 @@ def _optimize_for_budget(
         if alternatives:
             cheapest = min(alternatives, key=lambda p: p.get("price_inr", float("inf")))
             new_price = cheapest["price_inr"]
-            
+
             # Recalculate quantity units based on the substitute's packaging size
             needed_amount = item.quantity_units * item.unit_quantity
             cheapest_unit_qty = float(cheapest.get("unit_quantity", 1))
             new_quantity_units = max(1, math.ceil(needed_amount / cheapest_unit_qty))
             new_total = new_price * new_quantity_units
 
-            optimized.append(CartItem(
-                sku=cheapest["sku"],
-                name=cheapest["name"],
-                brand=cheapest.get("brand", ""),
-                quantity_units=new_quantity_units,
-                unit=cheapest.get("unit", item.unit),
-                unit_quantity=cheapest_unit_qty,
-                price_per_unit_inr=float(new_price),
-                total_price_inr=float(new_total),
-                optional=item.optional,
-                substituted=True,
-                substitution_reason=f"Budget: Rs.{new_price} vs Rs.{item.price_per_unit_inr} (saved Rs.{item.total_price_inr - float(new_total):.0f})",
-                matched_from=item.matched_from,
-            ))
-            logger.info(f"Substituted '{item.name}' -> '{cheapest['name']}' (saved Rs.{item.total_price_inr - float(new_total):.0f})")
+            # Attach as a pending suggestion instead of auto-swapping
+            savings = item.total_price_inr - float(new_total)
+            updated_item = item.model_copy(update={
+                "pending_substitution": {
+                    "name": cheapest["name"],
+                    "sku": cheapest["sku"],
+                    "brand": cheapest.get("brand", ""),
+                    "price_per_unit_inr": float(new_price),
+                    "quantity_units": new_quantity_units,
+                    "unit": cheapest.get("unit", item.unit),
+                    "unit_quantity": cheapest_unit_qty,
+                    "total_price_inr": float(new_total),
+                    "reason": f"Save ₹{savings:.0f}",
+                },
+                "substituted": False,  # don't auto-swap anymore
+            })
+            optimized.append(updated_item)
+            logger.info(f"Pending substitution for '{item.name}' -> '{cheapest['name']}' (potential saving ₹{savings:.0f})")
         else:
             optimized.append(item)
 
