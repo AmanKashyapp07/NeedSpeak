@@ -35,6 +35,7 @@ import {
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { samplePrompts } from "@/lib/mock/needspeak";
 import { saveToHistory, loadHistory, type CartHistoryEntry } from "@/lib/cart-history";
+import { loadPreferences } from "@/lib/preferences";
 import { useVoiceInput } from "@/hooks/use-voice-input";
 
 export const Route = createFileRoute("/chat")({
@@ -261,6 +262,8 @@ function ChatPage() {
   const [intentGroups, setIntentGroups] = useState<any[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [inputType, setInputType] = useState<"text" | "whatsapp">("text");
 
   // Voice input via MediaRecorder + backend transcription
   const voice = useVoiceInput({
@@ -332,13 +335,15 @@ function ChatPage() {
       }, 0)
     : 0;
 
-  const onSubmit = async () => {
-    if (!text.trim() || phase === "thinking") return;
+  const onSubmit = async (overrideText?: string, overrideType?: "text" | "whatsapp") => {
+    if ((!overrideText && !text.trim()) || phase === "thinking") return;
 
-    const inputText = text.trim();
+    const inputText = (overrideText || text).trim();
+    const currentInputType = overrideType || inputType;
     setMessages((m) => [...m, { role: "user", text: inputText }]);
     setPhase("thinking");
     setText("");
+    setInputType("text");
     setErrorMsg(null);
 
     // Budget: prefer explicit field, fall back to parsing text.
@@ -347,8 +352,12 @@ function ChatPage() {
     const budget = budgetFromField && budgetFromField >= 50 ? budgetFromField : budgetFromText;
 
     try {
-      const body: any = { content: inputText, input_type: "text" };
+      const prefs = loadPreferences();
+      const body: any = { content: inputText, input_type: currentInputType };
       if (budget) body.budget_inr = budget;
+      if (prefs.dietary !== "any") body.dietary_pref = prefs.dietary;
+      if (prefs.preferredBrands.length) body.preferred_brands = prefs.preferredBrands;
+      if (prefs.budgetStyle !== "balanced") body.budget_style = prefs.budgetStyle;
 
       const res = await fetch("/api/parse", {
         method: "POST",
@@ -544,20 +553,64 @@ function ChatPage() {
 
             {/* Attachment chip strip */}
             <div className="mb-2 flex flex-wrap gap-1.5">
-              {[
-                { i: LinkIcon, l: "Paste URL" },
-                { i: ImageIcon, l: "Image" },
-                { i: FileText, l: "PDF" },
-                { i: Paperclip, l: "WhatsApp" },
-              ].map((c) => (
-                <button
-                  key={c.l}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-muted-foreground hover:border-foreground hover:text-foreground"
-                >
-                  <c.i className="h-3.5 w-3.5" />
-                  {c.l}
-                </button>
-              ))}
+              <button className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-muted-foreground hover:border-foreground hover:text-foreground">
+                <LinkIcon className="h-3.5 w-3.5" /> Paste URL
+              </button>
+              
+              <button 
+                onClick={() => imageInputRef.current?.click()}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-muted-foreground hover:border-foreground hover:text-foreground"
+              >
+                <ImageIcon className="h-3.5 w-3.5" /> Image
+              </button>
+
+              <button className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-muted-foreground hover:border-foreground hover:text-foreground">
+                <FileText className="h-3.5 w-3.5" /> PDF
+              </button>
+
+              <button 
+                onClick={() => {
+                  const whatsappText = prompt("Paste your WhatsApp message:");
+                  if (whatsappText?.trim()) {
+                    setText(whatsappText.trim());
+                    setInputType("whatsapp");
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-muted-foreground hover:border-foreground hover:text-foreground"
+              >
+                <Paperclip className="h-3.5 w-3.5" /> WhatsApp
+              </button>
+              
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setPhase("thinking");
+                  setMessages(m => [...m, { role: "user", text: `📷 Uploaded: ${file.name}` }]);
+
+                  const formData = new FormData();
+                  formData.append("image", file);
+                  if (budgetInput) formData.append("budget_inr", budgetInput);
+
+                  try {
+                    const res = await fetch("/api/parse-image", { method: "POST", body: formData });
+                    if (!res.ok) throw new Error("Image parsing failed");
+                    const data = await res.json();
+                    if (data.extracted_text) {
+                      setText(data.extracted_text);
+                      setInputType("text");
+                      onSubmit(data.extracted_text, "text");
+                    }
+                  } catch (err: any) {
+                    setErrorMsg(err.message);
+                    setPhase("idle");
+                  }
+                }}
+              />
             </div>
 
             <PromptInput onSubmit={onSubmit}>
