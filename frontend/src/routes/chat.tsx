@@ -62,7 +62,7 @@ function ChatPage() {
       const data = await res.json();
       
       setCartData(data);
-      setMessages((m) => [...m, { role: "assistant", text: data.summary }]);
+      setMessages((m) => [...m, { role: "assistant", text: data.summary, cartData: data }]);
       setPhase("cart");
     } catch (e) {
       setMessages((m) => [...m, { role: "assistant", text: "Failed to process your request." }]);
