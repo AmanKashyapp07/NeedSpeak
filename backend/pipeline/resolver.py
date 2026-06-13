@@ -41,12 +41,20 @@ def _exact_match(item_name: str, products: list[dict]) -> Optional[dict]:
     return None
 
 
+STOP_WORDS = {
+    "fresh", "organic", "large", "small", "medium", "raw", "whole", "pure", "natural", 
+    "best", "good", "with", "and", "or", "of", "for", "in", "to", "a", "an", "the"
+}
+
 def _keyword_overlap_match(item_name: str, products: list[dict], category: str = None) -> Optional[dict]:
     """
     Find the product with the highest keyword overlap with the item name.
-    Requires a minimum of 1 overlapping word to match.
+    Requires a minimum matching threshold to avoid false positives.
     """
-    item_tokens = _tokenize(item_name)
+    item_tokens = _tokenize(item_name) - STOP_WORDS
+    if not item_tokens:
+        item_tokens = _tokenize(item_name)  # fallback if all are stop words
+        
     best_product = None
     best_score = 0
 
@@ -54,7 +62,7 @@ def _keyword_overlap_match(item_name: str, products: list[dict], category: str =
         if not p.get("in_stock", True):
             continue
 
-        # Build keyword set — handle both list and set types from DynamoDB
+        # Build keyword set
         product_keywords = set()
         kw_raw = p.get("keywords", [])
         if isinstance(kw_raw, (set, list)):
@@ -63,24 +71,31 @@ def _keyword_overlap_match(item_name: str, products: list[dict], category: str =
         elif isinstance(kw_raw, str):
             product_keywords.update(_tokenize(kw_raw))
 
-        # Also include product name tokens
         product_keywords.update(_tokenize(p.get("name", "")))
+        product_keywords = product_keywords - STOP_WORDS
 
         # Count overlapping words
-        overlap = len(item_tokens & product_keywords)
+        overlap_tokens = item_tokens & product_keywords
+        overlap = len(overlap_tokens)
 
         # Bonus: if categories match, boost the score slightly
+        category_boost = 0.0
         if category and p.get("category", "").lower() == category.lower():
-            overlap += 0.5
+            category_boost = 0.5
 
-        if overlap > best_score:
-            best_score = overlap
+        score = overlap + category_boost
+
+        if overlap > 0 and score > best_score:
+            # Additionally verify match percentage for multi-word requests to filter noise
+            if len(item_tokens) > 1:
+                ratio = overlap / len(item_tokens)
+                if overlap < 2 and ratio < 0.4:
+                    continue
+            best_score = score
             best_product = p
 
-    # Require minimum 1 real word overlap
-    if best_score >= 1:
-        return best_product
-    return None
+    return best_product
+
 
 
 def _category_fallback(category: str, products: list[dict]) -> Optional[dict]:
@@ -97,10 +112,10 @@ def _category_fallback(category: str, products: list[dict]) -> Optional[dict]:
 
 def _match_product(item: ExtractedItem, products: list[dict]) -> Optional[dict]:
     """
-    Three-tier matching strategy:
+    Three-tier matching strategy with safeguards:
     1. Exact name match
     2. Keyword overlap score
-    3. Category fallback (highest rated)
+    3. Category fallback (only if some token similarity or name association exists)
     """
     # 1. Exact match
     match = _exact_match(item.name, products)
@@ -114,14 +129,21 @@ def _match_product(item: ExtractedItem, products: list[dict]) -> Optional[dict]:
         logger.debug(f"Keyword match: '{item.name}' -> {match['sku']} (keywords)")
         return match
 
-    # 3. Category fallback
+    # 3. Category fallback with safety overlap guard
     match = _category_fallback(item.category, products)
     if match:
-        logger.debug(f"Category fallback: '{item.name}' -> {match['sku']} (category: {item.category})")
-        return match
+        item_tokens = _tokenize(item.name)
+        prod_tokens = _tokenize(match.get("name", "")) | set(match.get("keywords", []))
+        # Only allow fallback if there is at least 1 matching token or category keyword is in the name
+        if (item_tokens & prod_tokens) or (item.category.lower() in item.name.lower()):
+            logger.debug(f"Category fallback: '{item.name}' -> {match['sku']} (category: {item.category})")
+            return match
+        else:
+            logger.warning(f"Category fallback for '{item.name}' to '{match['name']}' rejected due to zero token overlap.")
 
     logger.warning(f"No match found for: '{item.name}' (category: {item.category})")
     return None
+
 
 
 # ---------------------------------------------------------------------------
@@ -226,22 +248,28 @@ def _optimize_for_budget(
         if alternatives:
             cheapest = min(alternatives, key=lambda p: p.get("price_inr", float("inf")))
             new_price = cheapest["price_inr"]
-            new_total = new_price * item.quantity_units
+            
+            # Recalculate quantity units based on the substitute's packaging size
+            needed_amount = item.quantity_units * item.unit_quantity
+            cheapest_unit_qty = float(cheapest.get("unit_quantity", 1))
+            new_quantity_units = max(1, math.ceil(needed_amount / cheapest_unit_qty))
+            new_total = new_price * new_quantity_units
 
             optimized.append(CartItem(
                 sku=cheapest["sku"],
                 name=cheapest["name"],
                 brand=cheapest.get("brand", ""),
-                quantity_units=item.quantity_units,
+                quantity_units=new_quantity_units,
                 unit=cheapest.get("unit", item.unit),
-                unit_quantity=cheapest.get("unit_quantity", item.unit_quantity),
+                unit_quantity=cheapest_unit_qty,
                 price_per_unit_inr=float(new_price),
                 total_price_inr=float(new_total),
                 optional=item.optional,
                 substituted=True,
-                substitution_reason=f"Budget: Rs.{new_price} vs Rs.{item.price_per_unit_inr} (saved Rs.{item.price_per_unit_inr - float(new_price):.0f})",
+                substitution_reason=f"Budget: Rs.{new_price} vs Rs.{item.price_per_unit_inr} (saved Rs.{item.total_price_inr - float(new_total):.0f})",
+                matched_from=item.matched_from,
             ))
-            logger.info(f"Substituted '{item.name}' -> '{cheapest['name']}' (saved Rs.{item.price_per_unit_inr - float(new_price):.0f})")
+            logger.info(f"Substituted '{item.name}' -> '{cheapest['name']}' (saved Rs.{item.total_price_inr - float(new_total):.0f})")
         else:
             optimized.append(item)
 
@@ -258,6 +286,7 @@ def resolve_cart(
     items: list[ExtractedItem],
     budget_inr: Optional[int] = None,
     session_id: str = "",
+    mock_mode: bool = False,
 ) -> tuple[list[CartItem], list[UnavailableItem], float, bool]:
     """
     Resolve extracted items to real products in the catalog.
@@ -265,7 +294,7 @@ def resolve_cart(
     Returns:
         (cart_items, unavailable_items, total_price, budget_exceeded)
     """
-    products = get_all_products()
+    products = get_all_products(mock_mode=mock_mode)
     cart_items: list[CartItem] = []
     unavailable_items: list[UnavailableItem] = []
 
@@ -312,7 +341,24 @@ def resolve_cart(
             optional=item.optional,
             substituted=False,
             substitution_reason=None,
+            matched_from=[f"{item.name} ({item.quantity} {item.unit})"],
         ))
+
+    # Fix 1: SKU Deduplication & Quantity Merging
+    merged_items: dict[str, CartItem] = {}
+    for item in cart_items:
+        if item.sku in merged_items:
+            existing = merged_items[item.sku]
+            merged_qty = existing.quantity_units + item.quantity_units
+            merged_items[item.sku] = existing.model_copy(update={
+                "quantity_units": merged_qty,
+                "total_price_inr": existing.price_per_unit_inr * merged_qty,
+                "optional": existing.optional and item.optional,  # required if either is required
+                "matched_from": existing.matched_from + item.matched_from
+            })
+        else:
+            merged_items[item.sku] = item
+    cart_items = list(merged_items.values())
 
     # Budget optimization
     budget_exceeded = False

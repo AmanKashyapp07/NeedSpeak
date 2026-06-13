@@ -1,6 +1,16 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Type, Link, Sparkles, Users, Wallet, ChevronDown } from 'lucide-react';
+import { Type, Link, Sparkles, Users, Wallet, ChevronDown, AlertTriangle } from 'lucide-react';
+
+// ---------------------------------------------------------------------------
+// Validation constants
+// ---------------------------------------------------------------------------
+const MAX_TEXT_LENGTH = 15_000;
+const MIN_TEXT_LENGTH = 5;
+const MAX_SERVINGS = 100;
+const MAX_BUDGET = 100_000;
+
+const URL_REGEX = /^https?:\/\/.+\..+/i;
 
 const QUICK_EXAMPLES = [
   {
@@ -27,10 +37,57 @@ export default function InputPanel({ onSubmit, isLoading }) {
   const [servings, setServings] = useState('');
   const [budget, setBudget] = useState('');
   const [showOptions, setShowOptions] = useState(false);
+  const [validationError, setValidationError] = useState('');
+
+  // ---------------------------------------------------------------------------
+  // Validation
+  // ---------------------------------------------------------------------------
+  const validate = () => {
+    const trimmed = content.trim();
+
+    if (!trimmed) {
+      return 'Please enter some text or a URL.';
+    }
+
+    if (inputType === 'url') {
+      if (!URL_REGEX.test(trimmed)) {
+        return 'Please enter a valid URL starting with http:// or https://';
+      }
+    } else {
+      if (trimmed.length < MIN_TEXT_LENGTH) {
+        return `Text is too short (minimum ${MIN_TEXT_LENGTH} characters). Paste a recipe or shopping list.`;
+      }
+      if (trimmed.length > MAX_TEXT_LENGTH) {
+        return `Text is too long (${trimmed.length.toLocaleString()} / ${MAX_TEXT_LENGTH.toLocaleString()} chars). Please shorten it.`;
+      }
+    }
+
+    // Numeric range checks
+    if (servings) {
+      const s = parseInt(servings);
+      if (isNaN(s) || s < 1) return 'Servings must be at least 1.';
+      if (s > MAX_SERVINGS) return `Servings cannot exceed ${MAX_SERVINGS}.`;
+    }
+    if (budget) {
+      const b = parseInt(budget);
+      if (isNaN(b) || b < 10) return 'Budget must be at least ₹10.';
+      if (b > MAX_BUDGET) return `Budget cannot exceed ₹${MAX_BUDGET.toLocaleString()}.`;
+    }
+
+    return '';
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!content.trim() || isLoading) return;
+    if (isLoading) return;
+
+    const error = validate();
+    if (error) {
+      setValidationError(error);
+      return;
+    }
+    setValidationError('');
+
     onSubmit({
       input_type: inputType,
       content: content.trim(),
@@ -39,9 +96,15 @@ export default function InputPanel({ onSubmit, isLoading }) {
     });
   };
 
+  const handleContentChange = (e) => {
+    setContent(e.target.value);
+    if (validationError) setValidationError('');   // clear on typing
+  };
+
   const handleExample = (example) => {
     setInputType('text');
     setContent(example.text);
+    setValidationError('');
   };
 
   return (
@@ -81,26 +144,52 @@ export default function InputPanel({ onSubmit, isLoading }) {
       {/* Input area */}
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-3">
         {inputType === 'text' ? (
-          <textarea
-            id="text-input"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Paste your recipe, shopping list, WhatsApp message, or any text with items to buy..."
-            className="flex-1 w-full p-4 rounded-xl text-sm bg-bg-deep text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all"
-            style={{ border: '1px solid var(--color-border)', minHeight: '200px' }}
-            disabled={isLoading}
-          />
+          <>
+            <textarea
+              id="text-input"
+              value={content}
+              onChange={handleContentChange}
+              maxLength={MAX_TEXT_LENGTH}
+              placeholder="Paste your recipe, shopping list, WhatsApp message, or any text with items to buy..."
+              className="flex-1 w-full p-4 rounded-xl text-sm bg-bg-deep text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all"
+              style={{
+                border: `1px solid ${validationError ? 'var(--color-danger, #F87171)' : 'var(--color-border)'}`,
+                minHeight: '200px',
+              }}
+              disabled={isLoading}
+            />
+            {content.length > 0 && (
+              <span className="text-[10px] text-text-muted self-end -mt-1">
+                {content.length.toLocaleString()} / {MAX_TEXT_LENGTH.toLocaleString()}
+              </span>
+            )}
+          </>
         ) : (
           <input
             id="url-input"
             type="url"
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={handleContentChange}
             placeholder="https://www.allrecipes.com/recipe/..."
             className="w-full p-4 rounded-xl text-sm bg-bg-deep text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all"
-            style={{ border: '1px solid var(--color-border)' }}
+            style={{
+              border: `1px solid ${validationError ? 'var(--color-danger, #F87171)' : 'var(--color-border)'}`,
+            }}
             disabled={isLoading}
           />
+        )}
+
+        {/* Validation error */}
+        {validationError && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg"
+            style={{ background: 'rgba(248, 113, 113, 0.1)', color: 'var(--color-danger, #F87171)' }}
+          >
+            <AlertTriangle size={13} />
+            {validationError}
+          </motion.div>
         )}
 
         {/* Options toggle */}
@@ -129,7 +218,7 @@ export default function InputPanel({ onSubmit, isLoading }) {
                 id="servings-input"
                 type="number"
                 min="1"
-                max="50"
+                max={MAX_SERVINGS}
                 value={servings}
                 onChange={(e) => setServings(e.target.value)}
                 placeholder="4"
@@ -159,7 +248,7 @@ export default function InputPanel({ onSubmit, isLoading }) {
         <motion.button
           id="submit-button"
           type="submit"
-          disabled={!content.trim() || isLoading}
+          disabled={isLoading}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className="w-full py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"

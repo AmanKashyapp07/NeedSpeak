@@ -184,12 +184,29 @@ def fetch_url_content(url: str) -> str:
         raise ValueError(get_unsupported_url_message(url))
 
     try:
-        response = requests.get(url, headers=HEADERS, timeout=10)
-        response.raise_for_status()
+        response = requests.get(url, headers=HEADERS, timeout=10, allow_redirects=True)
     except requests.Timeout:
         raise ValueError("The recipe page took too long to load. Please try again or paste the recipe text directly.")
+    except requests.ConnectionError:
+        raise ValueError("Could not connect to the recipe site. The site might be down — please paste the recipe text directly.")
+    except requests.exceptions.SSLError:
+        raise ValueError("Secure connection failed to the recipe site. Please paste the recipe text directly.")
+    except requests.exceptions.TooManyRedirects:
+        raise ValueError("The recipe URL redirected too many times. Please paste the recipe text directly.")
     except requests.RequestException as e:
         raise ValueError(f"Could not fetch the URL: {e}. Please paste the recipe text directly.")
+
+    # Status-code-specific messages
+    if response.status_code == 404:
+        raise ValueError("Recipe page not found (404). The URL may be broken — please double-check it or paste the recipe text.")
+    if response.status_code == 403:
+        raise ValueError("The recipe site blocked our request (403 Forbidden). Please paste the recipe text directly.")
+    if response.status_code == 429:
+        raise ValueError("Too many requests to the recipe site. Please wait a moment and try again.")
+    if response.status_code >= 500:
+        raise ValueError("The recipe site is experiencing issues (server error). Please try again later or paste the recipe text.")
+    if not response.ok:
+        raise ValueError(f"The recipe site returned an error (HTTP {response.status_code}). Please paste the recipe text directly.")
 
     html = response.text
 

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Zap, Menu } from 'lucide-react';
 import InputPanel from './components/InputPanel';
@@ -20,18 +20,21 @@ export default function App() {
   const [error, setError] = useState(null);
   const [budget, setBudget] = useState(null);
   const [mockMode, setMockMode] = useState(false);
-  const [mockClickCount, setMockClickCount] = useState(0);
+  const mockClickCountRef = useRef(0);
+  const mockTimerRef = useRef(null);
 
   // Hidden mock mode toggle: click the lightning bolt 5 times
   const handleMockToggle = () => {
-    const newCount = mockClickCount + 1;
-    setMockClickCount(newCount);
-    if (newCount >= 5) {
-      setMockMode(!mockMode);
-      setMockClickCount(0);
+    clearTimeout(mockTimerRef.current);
+    mockClickCountRef.current += 1;
+    if (mockClickCountRef.current >= 5) {
+      setMockMode(m => !m);
+      mockClickCountRef.current = 0;
+    } else {
+      mockTimerRef.current = setTimeout(() => {
+        mockClickCountRef.current = 0;
+      }, 3000);
     }
-    // Reset counter after 3 seconds
-    setTimeout(() => setMockClickCount(0), 3000);
   };
 
   const handleSubmit = useCallback(async (input) => {
@@ -65,7 +68,7 @@ export default function App() {
     }
   }, [mockMode]);
 
-  const isEmpty = !cart && !isLoading;
+  const isEmpty = (!cart || cart.length === 0) && !isLoading;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
@@ -106,8 +109,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Three-panel layout */}
-      <main className="flex-1 grid grid-cols-[380px_1fr_320px] gap-4 p-4 overflow-hidden">
+      {/* Three-panel layout: responsive flex/grid */}
+      <main className="flex-1 grid grid-cols-1 md:grid-cols-[380px_1fr] xl:grid-cols-[380px_1fr_320px] gap-4 p-4 overflow-y-auto xl:overflow-hidden">
         <InputPanel onSubmit={handleSubmit} isLoading={isLoading} />
         <CartPanel
           cart={cart}

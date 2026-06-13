@@ -76,7 +76,7 @@ export default function CartPanel({ cart, unavailableItems, totalPrice, budgetEx
       <div className="flex-1 overflow-y-auto space-y-2 pr-1">
         <AnimatePresence mode="popLayout">
           {cart?.map((item, i) => (
-            <CartItem key={item.sku} item={item} index={i} />
+            <CartItem key={`${item.sku}-${i}`} item={item} index={i} />
           ))}
         </AnimatePresence>
       </div>

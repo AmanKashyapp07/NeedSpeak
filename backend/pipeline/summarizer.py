@@ -15,20 +15,9 @@ import boto3
 
 from config import AWS_REGION, BEDROCK_MODEL_ID, MOCK_MODE
 from models import CartItem, UnavailableItem
+from pipeline.bedrock_client import get_bedrock_client
 
 logger = logging.getLogger(__name__)
-
-# ---------------------------------------------------------------------------
-# Bedrock Client (reuse from extractor if available)
-# ---------------------------------------------------------------------------
-_bedrock_client = None
-
-
-def _get_bedrock():
-    global _bedrock_client
-    if _bedrock_client is None:
-        _bedrock_client = boto3.client("bedrock-runtime", region_name=AWS_REGION)
-    return _bedrock_client
 
 
 # ---------------------------------------------------------------------------
@@ -50,13 +39,15 @@ def generate_summary(
     total_price: float,
     budget_inr: Optional[int] = None,
     budget_exceeded: bool = False,
+    mock_mode: bool = None,
 ) -> str:
     """
     Stage 3: Generate a plain English summary of the cart.
 
     Returns a 2-3 sentence string.
     """
-    if MOCK_MODE:
+    is_mock = mock_mode if mock_mode is not None else MOCK_MODE
+    if is_mock:
         return _get_mock_summary(cart_items, unavailable_items, context_summary, total_price)
 
     # Build the context for Bedrock
@@ -83,7 +74,7 @@ def generate_summary(
     user_prompt = f"Summarize this shopping cart result:\n{json.dumps(cart_summary, indent=2)}"
 
     try:
-        client = _get_bedrock()
+        client = get_bedrock_client()
         request_body = {
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": 256,

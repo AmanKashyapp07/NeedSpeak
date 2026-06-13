@@ -16,20 +16,9 @@ import boto3
 
 from config import AWS_REGION, BEDROCK_MODEL_ID, MOCK_MODE
 from models import ExtractionResult, ExtractedItem, IntentType
+from pipeline.bedrock_client import get_bedrock_client
 
 logger = logging.getLogger(__name__)
-
-# ---------------------------------------------------------------------------
-# Bedrock Client (singleton)
-# ---------------------------------------------------------------------------
-_bedrock_client = None
-
-
-def _get_bedrock():
-    global _bedrock_client
-    if _bedrock_client is None:
-        _bedrock_client = boto3.client("bedrock-runtime", region_name=AWS_REGION)
-    return _bedrock_client
 
 
 # ---------------------------------------------------------------------------
@@ -49,7 +38,8 @@ RULES:
 7. The context_summary should be one sentence describing what the user is trying to do.
 8. Understand Hindi, Hinglish, and Indian English — many inputs will use these.
 9. For budget-constrained requests, extract the budget but still list all items normally.
-10. If the text mentions servings/people, set the servings field accordingly."""
+10. If the text mentions servings/people, set the servings field accordingly.
+11. DEDUPLICATE: Combine identical or similar ingredients (e.g. "onions" and "sliced onions") into a single entry with their quantities combined/summed. Do NOT list the same item multiple times for different recipe steps."""
 
 USER_PROMPT_TEMPLATE = """Extract the shopping list from this text.{servings_instruction}
 
@@ -112,7 +102,7 @@ def _sanitize_json_response(raw: str) -> Optional[dict]:
 # ---------------------------------------------------------------------------
 def _call_bedrock(system_prompt: str, user_prompt: str) -> str:
     """Invoke Bedrock with the given prompts, return raw text response."""
-    client = _get_bedrock()
+    client = get_bedrock_client()
 
     request_body = {
         "anthropic_version": "bedrock-2023-05-31",
@@ -140,6 +130,7 @@ def _call_bedrock(system_prompt: str, user_prompt: str) -> str:
 def extract_items(
     text: str,
     servings_override: Optional[int] = None,
+    mock_mode: bool = None,
 ) -> ExtractionResult:
     """
     Stage 1: Extract a structured shopping list from raw text.
@@ -147,11 +138,13 @@ def extract_items(
     Args:
         text: Raw input text (recipe, list, message, etc.)
         servings_override: Optional serving count to scale quantities to
+        mock_mode: Optional request-scoped mock mode flag
 
     Returns:
         ExtractionResult with parsed items
     """
-    if MOCK_MODE:
+    is_mock = mock_mode if mock_mode is not None else MOCK_MODE
+    if is_mock:
         return _get_mock_extraction(text)
 
     # Build user prompt
@@ -220,12 +213,37 @@ def extract_items(
     except ValueError:
         intent_type = IntentType.GENERAL
 
+    items = _deduplicate_extracted_items(items)
+
     return ExtractionResult(
         intent_type=intent_type,
         context_summary=parsed.get("context_summary", ""),
         servings=parsed.get("servings"),
         items=items,
     )
+
+
+def _deduplicate_extracted_items(items: list[ExtractedItem]) -> list[ExtractedItem]:
+    """Merge items with identical names and units (e.g., 'onion' and 'onion')."""
+    merged: dict[tuple[str, str], ExtractedItem] = {}
+    for item in items:
+        # Normalize name: lowercase, strip, singularize (remove trailing 's' if any)
+        name_norm = item.name.lower().strip()
+        if len(name_norm) > 1 and name_norm.endswith("s"):
+            name_norm = name_norm[:-1]
+        
+        # Group by normalized name and unit
+        key = (name_norm, item.unit.lower().strip())
+        if key in merged:
+            existing = merged[key]
+            merged[key] = existing.model_copy(update={
+                "quantity": existing.quantity + item.quantity,
+                "optional": existing.optional and item.optional,  # required if either is required
+                "notes": f"{existing.notes or ''}; {item.notes or ''}".strip("; "),
+            })
+        else:
+            merged[key] = item
+    return list(merged.values())
 
 
 # ---------------------------------------------------------------------------
@@ -236,7 +254,7 @@ def _get_mock_extraction(text: str) -> ExtractionResult:
     text_lower = text.lower()
 
     # Detect intent from keywords
-    if any(w in text_lower for w in ["recipe", "biryani", "cook", "chicken", "masala", "curry"]):
+    if any(w in text_lower for w in ["biryani", "chicken", "masala", "curry", "चिकन", "बिरयानी", "मसाला"]):
         return ExtractionResult(
             intent_type=IntentType.RECIPE,
             context_summary="Chicken Biryani recipe for 4 people",
@@ -257,6 +275,22 @@ def _get_mock_extraction(text: str) -> ExtractionResult:
                 ExtractedItem(name="ginger", quantity=1, unit="inch", category="vegetables"),
                 ExtractedItem(name="garlic", quantity=8, unit="clove", category="vegetables"),
                 ExtractedItem(name="cooking oil", quantity=2, unit="tbsp", category="oils"),
+            ],
+        )
+    elif any(w in text_lower for w in ["burger", "bun", "patty", "बर्गर", "tikki"]):
+        return ExtractionResult(
+            intent_type=IntentType.RECIPE,
+            context_summary="Veggie Burger recipe",
+            servings=4,
+            items=[
+                ExtractedItem(name="burger buns", quantity=4, unit="piece", category="grains"),
+                ExtractedItem(name="aloo tikki patty", quantity=4, unit="piece", category="snacks"),
+                ExtractedItem(name="cheese slices", quantity=4, unit="piece", category="dairy"),
+                ExtractedItem(name="onion", quantity=2, unit="piece", category="vegetables"),
+                ExtractedItem(name="tomato", quantity=2, unit="piece", category="vegetables"),
+                ExtractedItem(name="lettuce", quantity=1, unit="piece", category="vegetables"),
+                ExtractedItem(name="mayonnaise", quantity=1, unit="pack", category="dairy"),
+                ExtractedItem(name="tomato ketchup", quantity=1, unit="pack", category="spices"),
             ],
         )
     elif any(w in text_lower for w in ["party", "chips", "cold drink", "snack", "popcorn"]):

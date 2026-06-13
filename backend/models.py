@@ -88,6 +88,8 @@ class CartItem(BaseModel):
     optional: bool = False
     substituted: bool = False
     substitution_reason: Optional[str] = None
+    matched_from: list[str] = Field(default_factory=list)
+
 
 
 class UnavailableItem(BaseModel):
@@ -122,6 +124,8 @@ class HealthResponse(BaseModel):
     status: str = "ok"
     bedrock: str = "ok"
     dynamodb: str = "ok"
+    s3: str = "ok"
+
 
 
 # ---------------------------------------------------------------------------

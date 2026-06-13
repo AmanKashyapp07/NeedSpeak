@@ -75,7 +75,10 @@ def fetch_youtube_transcript(url: str) -> str:
         )
 
     try:
-        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+        if hasattr(YouTubeTranscriptApi, 'list_transcripts'):
+            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+        else:
+            transcript_list = YouTubeTranscriptApi().list(video_id)
 
         # Prefer manually created transcripts, fall back to auto-generated
         transcript = None

@@ -78,17 +78,46 @@ UNIT_CONVERSIONS = {
     "bunches": {"to": "g", "factor": 100},
     "sprig": {"to": "g", "factor": 2},
     "sprigs": {"to": "g", "factor": 2},
-    "head": {"to": "g", "factor": 300, "context": "cauliflower"},
-    "knob": {"to": "g", "factor": 15, "context": "ginger"},
-    "slice": {"to": "g", "factor": 30, "context": "bread"},
-    "slices": {"to": "g", "factor": 30, "context": "bread"},
-    "stick": {"to": "g", "factor": 113, "context": "butter"},
-    "sticks": {"to": "g", "factor": 113, "context": "butter"},
+    "head": [
+        {"to": "g", "factor": 50, "context": "garlic"},
+        {"to": "g", "factor": 300, "context": "cauliflower"},
+        {"to": "g", "factor": 500, "context": "cabbage"},
+        {"to": "g", "factor": 300}  # default
+    ],
+    "bunches": {"to": "g", "factor": 100},
+    "sprig": {"to": "g", "factor": 2},
+    "sprigs": {"to": "g", "factor": 2},
+    "knob": [
+        {"to": "g", "factor": 15, "context": "ginger"},
+        {"to": "g", "factor": 15}
+    ],
+    "slice": [
+        {"to": "g", "factor": 30, "context": "bread"},
+        {"to": "g", "factor": 30}
+    ],
+    "slices": [
+        {"to": "g", "factor": 30, "context": "bread"},
+        {"to": "g", "factor": 30}
+    ],
+    "stick": [
+        {"to": "g", "factor": 113, "context": "butter"},
+        {"to": "g", "factor": 15, "context": "cinnamon"},
+        {"to": "g", "factor": 113}
+    ],
+    "sticks": [
+        {"to": "g", "factor": 113, "context": "butter"},
+        {"to": "g", "factor": 15, "context": "cinnamon"},
+        {"to": "g", "factor": 113}
+    ],
     "leaf": {"to": "g", "factor": 0.5},
     "leaves": {"to": "g", "factor": 0.5},
     "pod": {"to": "g", "factor": 1},
     "pods": {"to": "g", "factor": 1},
-    "inch": {"to": "g", "factor": 10, "context": "ginger_cinnamon"},
+    "inch": [
+        {"to": "g", "factor": 10, "context": "ginger"},
+        {"to": "g", "factor": 5, "context": "cinnamon"},
+        {"to": "g", "factor": 10}
+    ],
 
     # ─── Countable (treated as pieces) ────────────────────────────────
     "piece": {"to": "piece", "factor": 1},
@@ -138,6 +167,21 @@ def normalize_to_base_unit(quantity: float, unit: str, item_name: str = "") -> t
     if conversion is None:
         # Unit not found — return as-is, resolver will handle it
         return (quantity, unit_lower if unit_lower else "piece")
+
+    # If it is a list of context options, find the best match
+    if isinstance(conversion, list):
+        selected = None
+        for entry in conversion:
+            if "context" in entry:
+                if entry["context"].lower() in item_lower:
+                    selected = entry
+                    break
+            else:
+                if selected is None:
+                    selected = entry
+        if selected is None:
+            selected = conversion[0]
+        conversion = selected
 
     base_unit = conversion["to"]
     factor = conversion["factor"]
