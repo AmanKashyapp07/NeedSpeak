@@ -116,16 +116,18 @@ function CartItemRow({
   qty,
   onDecrement,
   onIncrement,
+  onRemove,
 }: {
   item: any;
   qty: number;
   onDecrement: () => void;
   onIncrement: () => void;
+  onRemove: () => void;
 }) {
   const effectiveTotal = (item.price_per_unit_inr * qty).toFixed(0);
 
   return (
-    <div className="rounded-xl border border-border bg-background p-3">
+    <div className="group rounded-xl border border-border bg-background p-3">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
         <div className="min-w-0">
           <div className="truncate text-sm font-medium">{item.name}</div>
@@ -144,7 +146,14 @@ function CartItemRow({
             </div>
           </div>
         </div>
-        <div className="shrink-0 text-right">
+        <div className="flex flex-col items-end gap-1">
+          <button
+            onClick={onRemove}
+            aria-label="Remove item"
+            className="flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
           <div className="text-sm font-semibold">₹{effectiveTotal}</div>
           <div className="text-[10px] text-muted-foreground">₹{item.price_per_unit_inr}/unit</div>
         </div>
@@ -232,6 +241,7 @@ function ChatPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [budgetInput, setBudgetInput] = useState<string>("");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [removedKeys, setRemovedKeys] = useState<Set<string>>(new Set());
   const [historyOpen, setHistoryOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -254,6 +264,7 @@ function ChatPage() {
       initial[item.sku ?? idx] = item.quantity_units;
     });
     setQuantities(initial);
+    setRemovedKeys(new Set());
   }, [cartData]);
 
   const adjustQty = useCallback((key: string, delta: number) => {
@@ -263,10 +274,11 @@ function ChatPage() {
     });
   }, []);
 
-  // Derived total based on quantity overrides.
+  // Derived total based on quantity overrides (excludes removed items).
   const computedTotal = cartData?.cart
     ? cartData.cart.reduce((sum: number, item: any, idx: number) => {
-        const key = item.sku ?? idx;
+        const key = String(item.sku ?? idx);
+        if (removedKeys.has(key)) return sum;
         const qty = quantities[key] ?? item.quantity_units;
         return sum + item.price_per_unit_inr * qty;
       }, 0)
@@ -595,7 +607,7 @@ function ChatPage() {
                       <Wallet className="h-3.5 w-3.5 text-brand" /> ₹{computedTotal.toFixed(0)}
                     </span>
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-1">
-                      <Users className="h-3.5 w-3.5" /> {cartData.cart?.length ?? 0} items
+                      <Users className="h-3.5 w-3.5" /> {(cartData.cart?.length ?? 0) - removedKeys.size} items
                     </span>
                     {budgetInput && Number(budgetInput) > 0 && (
                       <span
@@ -621,8 +633,11 @@ function ChatPage() {
                 {/* Items list */}
                 <div className="flex-1 overflow-y-auto p-4">
                   <div className="space-y-2.5">
-                    {cartData.cart?.map((item: any, idx: number) => {
-                      const key = item.sku ?? idx;
+                    {cartData.cart?.filter((_: any, idx: number) => {
+                      const key = String(_.sku ?? idx);
+                      return !removedKeys.has(key);
+                    }).map((item: any, idx: number) => {
+                      const key = String(item.sku ?? idx);
                       const qty = quantities[key] ?? item.quantity_units;
                       return (
                         <CartItemRow
@@ -631,6 +646,7 @@ function ChatPage() {
                           qty={qty}
                           onDecrement={() => adjustQty(key, -1)}
                           onIncrement={() => adjustQty(key, 1)}
+                          onRemove={() => setRemovedKeys((prev) => new Set([...prev, key]))}
                         />
                       );
                     })}
