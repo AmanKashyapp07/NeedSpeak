@@ -37,6 +37,7 @@ import { samplePrompts } from "@/lib/mock/needspeak";
 import { saveToHistory, loadHistory, type CartHistoryEntry } from "@/lib/cart-history";
 import { loadPreferences } from "@/lib/preferences";
 import { useVoiceInput } from "@/hooks/use-voice-input";
+import { getItemBadge } from "@/lib/mock/item-badges";
 
 export const Route = createFileRoute("/chat")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -132,8 +133,13 @@ function CartItemRow({
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
         <div className="min-w-0">
           <div className="truncate text-sm font-medium">{item.name}</div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            {item.brand} · {item.unit_quantity}{item.unit}
+          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span>{item.brand} · {item.unit_quantity}{item.unit}</span>
+            {getItemBadge(item.sku) && (
+              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${getItemBadge(item.sku)!.color}`}>
+                {getItemBadge(item.sku)!.label}
+              </span>
+            )}
           </div>
           <div className="mt-2 flex items-center gap-2">
             <QuantityControl value={qty} onDecrement={onDecrement} onIncrement={onIncrement} />
