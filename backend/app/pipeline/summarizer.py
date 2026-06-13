@@ -15,7 +15,7 @@ from google import genai
 from google.genai import types
 
 from app.config import AWS_REGION, BEDROCK_MODEL_ID, MOCK_MODE, GEMINI_API_KEY, GEMINI_MODEL_ID, LLM_PROVIDER
-from app.models import CartItem, UnavailableItem
+from app.models import IntentGroup, CartItem, UnavailableItem
 from app.pipeline.bedrock_client import get_bedrock_client
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Summary Generation
 # ---------------------------------------------------------------------------
-SUMMARY_SYSTEM_PROMPT = """You are a helpful shopping assistant. Given a resolved shopping cart, \
+SUMMARY_SYSTEM_PROMPT = """You are a helpful shopping assistant. Given a resolved shopping cart (which may contain multiple distinct intents or groups), \
 generate a brief 2-3 sentence summary in plain English that tells the user:
 1. What was found and added to cart
 2. Any substitutions made and why
@@ -34,9 +34,7 @@ Be concise, friendly, and helpful. Use Indian Rupee (Rs.) for prices. Do not use
 
 
 def generate_summary(
-    cart_items: list[CartItem],
-    unavailable_items: list[UnavailableItem],
-    context_summary: str,
+    intent_groups: list[IntentGroup],
     total_price: float,
     budget_inr: Optional[int] = None,
     budget_exceeded: bool = False,
@@ -49,23 +47,28 @@ def generate_summary(
     """
     is_mock = mock_mode if mock_mode is not None else MOCK_MODE
     if is_mock:
-        return _get_mock_summary(cart_items, unavailable_items, context_summary, total_price)
+        return _get_mock_summary(intent_groups, total_price)
 
     # Build the context for Bedrock
-    substitutions = [i for i in cart_items if i.substituted]
     cart_summary = {
-        "context": context_summary,
-        "items_found": len(cart_items),
-        "items_unavailable": len(unavailable_items),
+        "intent_groups": [
+            {
+                "intent": g.intent_type.value,
+                "context": g.context_summary,
+                "items_found": len(g.cart),
+                "items_unavailable": len(g.unavailable_items),
+                "substitutions": [
+                    {"name": i.name, "brand": i.brand, "reason": i.substitution_reason}
+                    for i in g.cart if i.substituted
+                ],
+                "unavailable": [
+                    {"name": i.name, "reason": i.reason.value}
+                    for i in g.unavailable_items
+                ],
+            }
+            for g in intent_groups
+        ],
         "total_price_inr": total_price,
-        "substitutions": [
-            {"name": i.name, "brand": i.brand, "reason": i.substitution_reason}
-            for i in substitutions
-        ],
-        "unavailable": [
-            {"name": i.name, "reason": i.reason.value}
-            for i in unavailable_items
-        ],
     }
 
     if budget_inr:
@@ -100,41 +103,70 @@ def generate_summary(
         else:
             logger.info("Using Google Gemini provider for summarization.")
             client = genai.Client(api_key=GEMINI_API_KEY)
-            response = client.models.generate_content(
-                model=GEMINI_MODEL_ID,
-                contents=user_prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=SUMMARY_SYSTEM_PROMPT,
-                    max_output_tokens=256,
-                    temperature=0.4,
-                )
-            )
-            summary = response.text.strip() if response.text else ""
+            
+            models_to_try = [GEMINI_MODEL_ID]
+            for m in ["gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-3.1-flash-lite"]:
+                if m not in models_to_try:
+                    models_to_try.append(m)
+                    
+            response = None
+            last_error = None
+            for model in models_to_try:
+                for attempt in range(3):
+                    try:
+                        logger.info(f"Attempting Gemini summarization with model={model} (attempt {attempt + 1})...")
+                        response = client.models.generate_content(
+                            model=model,
+                            contents=user_prompt,
+                            config=types.GenerateContentConfig(
+                                system_instruction=SUMMARY_SYSTEM_PROMPT,
+                                max_output_tokens=256,
+                                temperature=0.4,
+                            )
+                        )
+                        if response.text:
+                            logger.info(f"Gemini summarization succeeded with model={model}")
+                            break
+                        else:
+                            raise ValueError("Empty response text received")
+                    except Exception as e:
+                        last_error = e
+                        logger.warning(f"Gemini summarization model={model} attempt {attempt + 1} failed: {e}")
+                        import time
+                        time.sleep(1 * (attempt + 1))
+                if response and response.text:
+                    break
+            
+            if not response or not response.text:
+                raise last_error or RuntimeError("Gemini summarization failed for all models")
+                
+            summary = response.text.strip()
         logger.info(f"Summary generated: {summary[:80]}...")
         return summary
 
     except Exception as e:
         logger.error(f"Summary generation failed: {e}")
         # Fallback: generate a basic summary without Bedrock
-        return _generate_fallback_summary(cart_items, unavailable_items, total_price)
+        return _generate_fallback_summary(intent_groups, total_price)
 
 
 def _generate_fallback_summary(
-    cart_items: list[CartItem],
-    unavailable_items: list[UnavailableItem],
+    intent_groups: list[IntentGroup],
     total_price: float,
 ) -> str:
     """Generate a basic summary without Bedrock (fallback)."""
-    parts = [f"Found {len(cart_items)} items for your cart, totaling Rs.{total_price:.0f}."]
+    total_items = sum(len(g.cart) for g in intent_groups)
+    parts = [f"Found {total_items} items for your cart, totaling Rs.{total_price:.0f}."]
 
-    substituted = [i for i in cart_items if i.substituted]
-    if substituted:
-        parts.append(f"{len(substituted)} item(s) were substituted with budget-friendly alternatives.")
+    sub_count = sum(1 for g in intent_groups for i in g.cart if i.substituted)
+    if sub_count:
+        parts.append(f"{sub_count} item(s) were substituted with budget-friendly alternatives.")
 
-    if unavailable_items:
-        names = ", ".join(i.name for i in unavailable_items[:3])
-        if len(unavailable_items) > 3:
-            names += f" and {len(unavailable_items) - 3} more"
+    all_unavailable = [i for g in intent_groups for i in g.unavailable_items]
+    if all_unavailable:
+        names = ", ".join(i.name for i in all_unavailable[:3])
+        if len(all_unavailable) > 3:
+            names += f" and {len(all_unavailable) - 3} more"
         parts.append(f"{names} could not be found in our catalog.")
 
     return " ".join(parts)
@@ -144,20 +176,23 @@ def _generate_fallback_summary(
 # Mock Summary
 # ---------------------------------------------------------------------------
 def _get_mock_summary(
-    cart_items: list[CartItem],
-    unavailable_items: list[UnavailableItem],
-    context_summary: str,
+    intent_groups: list[IntentGroup],
     total_price: float,
 ) -> str:
     """Generate a realistic mock summary."""
-    sub_count = sum(1 for i in cart_items if i.substituted)
-    parts = [f"I found {len(cart_items)} of the items you need for {context_summary.lower()}, totaling Rs.{total_price:.0f}."]
+    total_items = sum(len(g.cart) for g in intent_groups)
+    contexts = [g.context_summary.lower() for g in intent_groups if g.context_summary]
+    context_str = " and ".join(contexts) if contexts else "your requests"
+    
+    parts = [f"I found {total_items} of the items you need for {context_str}, totaling Rs.{total_price:.0f}."]
 
+    sub_count = sum(1 for g in intent_groups for i in g.cart if i.substituted)
     if sub_count:
         parts.append(f"{sub_count} item(s) were swapped for more affordable alternatives to help with your budget.")
 
-    if unavailable_items:
-        names = ", ".join(i.name for i in unavailable_items[:2])
-        parts.append(f"{names} {'is' if len(unavailable_items) == 1 else 'are'} not currently available in our catalog.")
+    all_unavailable = [i for g in intent_groups for i in g.unavailable_items]
+    if all_unavailable:
+        names = ", ".join(i.name for i in all_unavailable[:2])
+        parts.append(f"{names} {'is' if len(all_unavailable) == 1 else 'are'} not currently available in our catalog.")
 
     return " ".join(parts)

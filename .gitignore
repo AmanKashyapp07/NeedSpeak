@@ -23,3 +23,19 @@ a_reports/
 
 # IDEs
 .vscode/
+.agent/
+.claude/
+.codebuddy/
+.codex/
+.continue/
+.cursor/
+.gemini/
+.kiro/
+.opencode/
+.qoder/
+.roo/
+.trae/
+.windsurf/
+ui-ux-pro-max-skill/
+backend/transcript_output*.txt
+.github/

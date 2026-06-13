@@ -11,7 +11,7 @@ from typing import Optional
 
 import boto3
 
-from app.config import AWS_REGION, S3_BUCKET, MOCK_MODE
+from app.config import AWS_REGION, S3_BUCKET, MOCK_AWS
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ def store_raw_input(session_id: str, content: str, mock_mode: Optional[bool] = N
     Store the raw input text to S3.
     Returns the S3 key, or None if in mock mode.
     """
-    is_mock = mock_mode if mock_mode is not None else MOCK_MODE
+    is_mock = MOCK_AWS or (mock_mode if mock_mode is not None else False)
     if is_mock:
         logger.info(f"[MOCK] Would store raw input for session: {session_id}")
         return f"sessions/{session_id}/raw_input.txt"
@@ -61,7 +61,7 @@ def store_cart_result(session_id: str, cart_json: dict, mock_mode: Optional[bool
     Store the final cart JSON to S3.
     Returns the S3 key, or None if in mock mode.
     """
-    is_mock = mock_mode if mock_mode is not None else MOCK_MODE
+    is_mock = MOCK_AWS or (mock_mode if mock_mode is not None else False)
     if is_mock:
         logger.info(f"[MOCK] Would store cart result for session: {session_id}")
         return f"sessions/{session_id}/cart_result.json"
@@ -83,7 +83,7 @@ def store_cart_result(session_id: str, cart_json: dict, mock_mode: Optional[bool
 
 def get_raw_input(session_id: str, mock_mode: Optional[bool] = None) -> Optional[str]:
     """Retrieve the raw input text from S3."""
-    is_mock = mock_mode if mock_mode is not None else MOCK_MODE
+    is_mock = MOCK_AWS or (mock_mode if mock_mode is not None else False)
     if is_mock:
         return "Mock raw input content"
 
@@ -101,7 +101,7 @@ def store_failed_match_log(item_name: str, session_id: str, mock_mode: Optional[
     Log a failed SKU match to S3 for post-run analysis.
     This helps identify missing keywords that should be added to the catalog.
     """
-    is_mock = mock_mode if mock_mode is not None else MOCK_MODE
+    is_mock = MOCK_AWS or (mock_mode if mock_mode is not None else False)
     if is_mock:
         logger.info(f"[MOCK] Failed match: {item_name}")
         return
@@ -124,7 +124,7 @@ def store_failed_match_log(item_name: str, session_id: str, mock_mode: Optional[
 # ---------------------------------------------------------------------------
 def check_s3_health(mock_mode: Optional[bool] = None) -> bool:
     """Verify S3 connectivity by checking the bucket exists."""
-    is_mock = mock_mode if mock_mode is not None else MOCK_MODE
+    is_mock = MOCK_AWS or (mock_mode if mock_mode is not None else False)
     if is_mock:
         return True
     try:

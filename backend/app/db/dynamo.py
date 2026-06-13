@@ -16,7 +16,7 @@ from typing import Optional
 import boto3
 from boto3.dynamodb.conditions import Key
 
-from app.config import AWS_REGION, DYNAMODB_TABLE_PRODUCTS, DYNAMODB_TABLE_SESSIONS, MOCK_MODE
+from app.config import AWS_REGION, DYNAMODB_TABLE_PRODUCTS, DYNAMODB_TABLE_SESSIONS, MOCK_AWS
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ def load_all_products(mock_mode: Optional[bool] = None) -> list[dict]:
     """
     global _product_cache, _cache_loaded
 
-    is_mock = mock_mode if mock_mode is not None else MOCK_MODE
+    is_mock = MOCK_AWS or (mock_mode if mock_mode is not None else False)
     if is_mock:
         _product_cache = _get_mock_products()
         _cache_loaded = True
@@ -97,7 +97,7 @@ def load_all_products(mock_mode: Optional[bool] = None) -> list[dict]:
 
 def get_all_products(mock_mode: Optional[bool] = None) -> list[dict]:
     """Get all products, loading from DynamoDB if not cached."""
-    is_mock = mock_mode if mock_mode is not None else MOCK_MODE
+    is_mock = MOCK_AWS or (mock_mode if mock_mode is not None else False)
     if is_mock:
         return _get_mock_products()
 
@@ -128,7 +128,7 @@ def get_product_by_sku(sku: str, mock_mode: Optional[bool] = None) -> Optional[d
 # ---------------------------------------------------------------------------
 def save_session(session_data: dict, mock_mode: Optional[bool] = None) -> None:
     """Save a session record to CartSessions table."""
-    is_mock = mock_mode if mock_mode is not None else MOCK_MODE
+    is_mock = MOCK_AWS or (mock_mode if mock_mode is not None else False)
     if is_mock:
         logger.info(f"[MOCK] Would save session: {session_data.get('session_id')}")
         return
@@ -142,7 +142,7 @@ def save_session(session_data: dict, mock_mode: Optional[bool] = None) -> None:
 
 def get_session(session_id: str, mock_mode: Optional[bool] = None) -> Optional[dict]:
     """Retrieve a session by ID."""
-    is_mock = mock_mode if mock_mode is not None else MOCK_MODE
+    is_mock = MOCK_AWS or (mock_mode if mock_mode is not None else False)
     if is_mock:
         return _get_mock_session(session_id)
 
@@ -159,7 +159,7 @@ def get_session(session_id: str, mock_mode: Optional[bool] = None) -> Optional[d
 # ---------------------------------------------------------------------------
 def check_dynamodb_health(mock_mode: Optional[bool] = None) -> bool:
     """Verify DynamoDB connectivity by describing the products table."""
-    is_mock = mock_mode if mock_mode is not None else MOCK_MODE
+    is_mock = MOCK_AWS or (mock_mode if mock_mode is not None else False)
     if is_mock:
         return True
     try:

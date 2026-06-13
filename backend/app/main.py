@@ -41,6 +41,7 @@ from app.models import (
     HealthResponse,
     InputType,
     ErrorCode,
+    IntentGroup,
 )
 from app.pipeline.extractor import extract_items
 from app.pipeline.resolver import resolve_cart
@@ -81,8 +82,10 @@ async def lifespan(app: FastAPI):
     logger.info("=" * 50)
     logger.info("Context-to-Cart starting up...")
     logger.info(f"  Mock Mode: {'ON' if config.MOCK_MODE else 'OFF'}")
+    logger.info(f"  Mock AWS:  {'ON' if config.MOCK_AWS else 'OFF'}")
     logger.info(f"  Region:    {config.AWS_REGION}")
-    logger.info(f"  Model:     {config.BEDROCK_MODEL_ID}")
+    logger.info(f"  Provider:  {config.LLM_PROVIDER}")
+    logger.info(f"  Model:     {config.GEMINI_MODEL_ID if config.LLM_PROVIDER == 'gemini' else config.BEDROCK_MODEL_ID}")
     logger.info("=" * 50)
 
     products = load_all_products()
@@ -109,6 +112,8 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -208,7 +213,7 @@ async def parse_content(req: ParseRequest, request: Request):
                 },
             )
 
-        if not extraction.items and extraction.confidence != "low":
+        if not extraction.intents and extraction.confidence != "low":
             raise HTTPException(
                 status_code=400,
                 detail={
@@ -217,42 +222,55 @@ async def parse_content(req: ParseRequest, request: Request):
                 },
             )
 
-        logger.info(f"[{session_id}] Extracted {len(extraction.items)} items (intent: {extraction.intent_type.value})")
+        logger.info(f"[{session_id}] Extracted {len(extraction.intents)} intents")
 
         # ── Step 3: Resolve ─────────────────────────────────────────────
-        logger.info(f"[{session_id}] Resolving SKUs...")
-        cart_items, unavailable_items, total_price, budget_exceeded = resolve_cart(
-            items=extraction.items,
-            budget_inr=req.budget_inr,
-            session_id=session_id,
-            mock_mode=mock_mode,
-        )
+        logger.info(f"[{session_id}] Resolving SKUs per intent...")
+        
+        resolved_intent_groups = []
+        global_total_price = 0.0
+        global_budget_exceeded = False
+        
+        for intent in extraction.intents:
+            cart_items, unavailable_items, intent_total_price, intent_budget_exceeded = resolve_cart(
+                items=intent.items,
+                budget_inr=req.budget_inr,
+                session_id=session_id,
+                mock_mode=mock_mode,
+            )
+            global_total_price += intent_total_price
+            global_budget_exceeded = global_budget_exceeded or intent_budget_exceeded
+            
+            resolved_intent_groups.append(IntentGroup(
+                intent_type=intent.intent_type,
+                context_summary=intent.context_summary,
+                cart=cart_items,
+                unavailable_items=unavailable_items
+            ))
 
-        logger.info(f"[{session_id}] Resolved: {len(cart_items)} in cart, {len(unavailable_items)} unavailable")
+        logger.info(f"[{session_id}] Resolved {len(resolved_intent_groups)} intents")
 
         # ── Step 4: Summarize ───────────────────────────────────────────
         logger.info(f"[{session_id}] Generating summary...")
-        summary = generate_summary(
-            cart_items=cart_items,
-            unavailable_items=unavailable_items,
-            context_summary=extraction.context_summary,
-            total_price=total_price,
-            budget_inr=req.budget_inr,
-            budget_exceeded=budget_exceeded,
-            mock_mode=mock_mode,
-        )
+        if extraction.confidence == "low" and extraction.clarification_question:
+            summary = extraction.clarification_question
+        else:
+            summary = generate_summary(
+                intent_groups=resolved_intent_groups,
+                total_price=global_total_price,
+                budget_inr=req.budget_inr,
+                budget_exceeded=global_budget_exceeded,
+                mock_mode=mock_mode,
+            )
 
         # ── Step 5: Store session ───────────────────────────────────────
         response_data = ParseResponse(
             session_id=session_id,
-            intent_type=extraction.intent_type,
-            context_summary=extraction.context_summary,
             confidence=extraction.confidence,
             clarification_question=extraction.clarification_question,
-            cart=[item for item in cart_items],
-            unavailable_items=[item for item in unavailable_items],
-            total_price_inr=total_price,
-            budget_exceeded=budget_exceeded,
+            intents=resolved_intent_groups,
+            total_price_inr=global_total_price,
+            budget_exceeded=global_budget_exceeded,
             summary=summary,
         )
 
@@ -261,23 +279,20 @@ async def parse_content(req: ParseRequest, request: Request):
             "session_id": session_id,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "input_type": req.input_type.value,
-            "intent_type": extraction.intent_type.value,
-            "context_summary": extraction.context_summary,
             "confidence": extraction.confidence,
             "clarification_question": extraction.clarification_question,
-            "extracted_items": [item.model_dump() for item in extraction.items],
-            "cart_items": [item.model_dump() for item in cart_items],
-            "unavailable_items": [item.model_dump() for item in unavailable_items],
-            "total_price_inr": total_price,
+            "extracted_intents": [i.model_dump() for i in extraction.intents],
+            "resolved_intents": [g.model_dump() for g in resolved_intent_groups],
+            "total_price_inr": global_total_price,
             "budget_inr": req.budget_inr,
-            "budget_exceeded": budget_exceeded,
+            "budget_exceeded": global_budget_exceeded,
             "summary": summary,
             "status": "completed",
         }
         save_session(session_data, mock_mode=mock_mode)
         store_cart_result(session_id, session_data, mock_mode=mock_mode)
 
-        logger.info(f"[{session_id}] Done! Total: Rs.{total_price:.0f}")
+        logger.info(f"[{session_id}] Done! Total: Rs.{global_total_price:.0f}")
         return response_data
 
     try:

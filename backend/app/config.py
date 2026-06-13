@@ -34,15 +34,21 @@ DYNAMODB_TABLE_SESSIONS = os.getenv("DYNAMODB_TABLE_SESSIONS", "CartSessions")
 S3_BUCKET = os.getenv("S3_BUCKET", "pulse-cart-sessions-shivam-2026")
 
 # ---------------------------------------------------------------------------
-# Mock Mode
-# ---------------------------------------------------------------------------
-# Set MOCK_MODE=1 to bypass all AWS calls (Bedrock, DynamoDB, S3).
-# Returns perfectly-formatted dummy responses for demo resilience.
-# Activate via:
-#   - Environment variable:  MOCK_MODE=1
-#   - .env file:             MOCK_MODE=1
-#   - Frontend hidden toggle (sends X-Mock-Mode: 1 header)
 MOCK_MODE = os.getenv("MOCK_MODE", "0").strip().lower() in ("1", "true", "yes")
+
+# Decoupled mock flags to allow using Gemini/Bedrock live while keeping AWS databases mocked
+import botocore.session
+try:
+    _has_aws_creds = botocore.session.get_session().get_credentials() is not None
+except Exception:
+    _has_aws_creds = False
+
+MOCK_AWS_ENV = os.getenv("MOCK_AWS", "").strip().lower()
+if MOCK_AWS_ENV:
+    MOCK_AWS = MOCK_AWS_ENV in ("1", "true", "yes")
+else:
+    MOCK_AWS = MOCK_MODE or not _has_aws_creds
+
 
 # ---------------------------------------------------------------------------
 # Google Gemini API
