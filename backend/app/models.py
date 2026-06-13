@@ -63,14 +63,19 @@ class ExtractedItem(BaseModel):
     notes: Optional[str] = None
 
 
-class ExtractionResult(BaseModel):
-    """Full extraction output from Bedrock Stage 1."""
+class ExtractedIntent(BaseModel):
+    """A specific intent extracted with its items."""
     intent_type: IntentType = IntentType.GENERAL
     context_summary: str = ""
+    items: list[ExtractedItem] = Field(default_factory=list)
+
+
+class ExtractionResult(BaseModel):
+    """Full extraction output from LLM Stage 1."""
     servings: Optional[int] = None
     confidence: str = "high"
     clarification_question: Optional[str] = None
-    items: list[ExtractedItem] = Field(default_factory=list)
+    intents: list[ExtractedIntent] = Field(default_factory=list)
     error: Optional[str] = None
 
 
@@ -103,15 +108,20 @@ class UnavailableItem(BaseModel):
 # ---------------------------------------------------------------------------
 # Response Models
 # ---------------------------------------------------------------------------
+class IntentGroup(BaseModel):
+    """A cart resolved for a specific intent."""
+    intent_type: IntentType
+    context_summary: str
+    cart: list[CartItem]
+    unavailable_items: list[UnavailableItem] = Field(default_factory=list)
+
+
 class ParseResponse(BaseModel):
     """POST /api/parse success response."""
     session_id: str
-    intent_type: IntentType
-    context_summary: str
     confidence: str = "high"
     clarification_question: Optional[str] = None
-    cart: list[CartItem]
-    unavailable_items: list[UnavailableItem] = Field(default_factory=list)
+    intents: list[IntentGroup] = Field(default_factory=list)
     total_price_inr: float
     budget_exceeded: bool = False
     summary: str = ""
@@ -141,13 +151,10 @@ class SessionRecord(BaseModel):
     created_at: str
     input_type: InputType
     raw_input_s3_key: Optional[str] = None
-    intent_type: Optional[IntentType] = None
-    context_summary: Optional[str] = None
     confidence: Optional[str] = None
     clarification_question: Optional[str] = None
-    extracted_items: Optional[list[dict]] = None
-    cart_items: Optional[list[dict]] = None
-    unavailable_items: Optional[list[dict]] = None
+    extracted_intents: Optional[list[dict]] = None
+    resolved_intents: Optional[list[dict]] = None
     total_price_inr: Optional[float] = None
     budget_inr: Optional[int] = None
     budget_exceeded: Optional[bool] = None
