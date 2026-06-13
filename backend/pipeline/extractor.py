@@ -253,8 +253,24 @@ def _get_mock_extraction(text: str) -> ExtractionResult:
     """Return a realistic mock extraction for demo/testing."""
     text_lower = text.lower()
 
-    # Detect intent from keywords
-    if any(w in text_lower for w in ["biryani", "chicken", "masala", "curry", "चिकन", "बिरयानी", "मसाला"]):
+    # Detect intent from keywords - check burger first to avoid 'masala' keyword collision
+    if any(w in text_lower for w in ["burger", "bun", "patty", "बर्गर", "tikki"]):
+        return ExtractionResult(
+            intent_type=IntentType.RECIPE,
+            context_summary="Veggie Burger recipe",
+            servings=4,
+            items=[
+                ExtractedItem(name="burger buns", quantity=4, unit="piece", category="grains"),
+                ExtractedItem(name="aloo tikki patty", quantity=4, unit="piece", category="snacks"),
+                ExtractedItem(name="cheese slices", quantity=4, unit="piece", category="dairy"),
+                ExtractedItem(name="onion", quantity=2, unit="piece", category="vegetables"),
+                ExtractedItem(name="tomato", quantity=2, unit="piece", category="vegetables"),
+                ExtractedItem(name="lettuce", quantity=1, unit="piece", category="vegetables"),
+                ExtractedItem(name="mayonnaise", quantity=1, unit="pack", category="dairy"),
+                ExtractedItem(name="tomato ketchup", quantity=1, unit="pack", category="spices"),
+            ],
+        )
+    elif any(w in text_lower for w in ["biryani", "chicken", "curry", "चिकन", "बिरयानी"]):
         return ExtractionResult(
             intent_type=IntentType.RECIPE,
             context_summary="Chicken Biryani recipe for 4 people",
@@ -275,22 +291,6 @@ def _get_mock_extraction(text: str) -> ExtractionResult:
                 ExtractedItem(name="ginger", quantity=1, unit="inch", category="vegetables"),
                 ExtractedItem(name="garlic", quantity=8, unit="clove", category="vegetables"),
                 ExtractedItem(name="cooking oil", quantity=2, unit="tbsp", category="oils"),
-            ],
-        )
-    elif any(w in text_lower for w in ["burger", "bun", "patty", "बर्गर", "tikki"]):
-        return ExtractionResult(
-            intent_type=IntentType.RECIPE,
-            context_summary="Veggie Burger recipe",
-            servings=4,
-            items=[
-                ExtractedItem(name="burger buns", quantity=4, unit="piece", category="grains"),
-                ExtractedItem(name="aloo tikki patty", quantity=4, unit="piece", category="snacks"),
-                ExtractedItem(name="cheese slices", quantity=4, unit="piece", category="dairy"),
-                ExtractedItem(name="onion", quantity=2, unit="piece", category="vegetables"),
-                ExtractedItem(name="tomato", quantity=2, unit="piece", category="vegetables"),
-                ExtractedItem(name="lettuce", quantity=1, unit="piece", category="vegetables"),
-                ExtractedItem(name="mayonnaise", quantity=1, unit="pack", category="dairy"),
-                ExtractedItem(name="tomato ketchup", quantity=1, unit="pack", category="spices"),
             ],
         )
     elif any(w in text_lower for w in ["party", "chips", "cold drink", "snack", "popcorn"]):

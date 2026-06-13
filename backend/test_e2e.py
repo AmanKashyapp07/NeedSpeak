@@ -100,4 +100,4 @@ r4 = requests.get("http://localhost:8000/api/health", headers={"X-Mock-Mode": "1
 print(f"Status: {r4.status_code}")
 print(f"Response: {r4.json()}")
 
-print("\n✅ All tests completed!")
+print("\n[SUCCESS] All tests completed!")
