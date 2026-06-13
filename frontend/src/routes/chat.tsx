@@ -208,6 +208,18 @@ function ChatPage() {
                           </div>
                         </div>
                       ))}
+                      {intentGroup.unavailable_items?.map((it: any, i: number) => (
+                        <div key={i} className="rounded-xl border border-dashed border-destructive/35 bg-destructive/5 p-3 opacity-90">
+                          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-medium line-through text-muted-foreground">{it.name}</div>
+                              <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">
+                                Unavailable: {it.reason?.replace('_', ' ')}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>
