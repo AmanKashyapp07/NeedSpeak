@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { ShoppingCart, Zap, Menu } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShoppingCart, Zap } from 'lucide-react';
 import InputPanel from './components/InputPanel';
 import CartPanel from './components/CartPanel';
 import SummaryPanel from './components/SummaryPanel';
@@ -23,7 +23,7 @@ export default function App() {
   const mockClickCountRef = useRef(0);
   const mockTimerRef = useRef(null);
 
-  // Hidden mock mode toggle: click the lightning bolt 5 times
+  // Hidden mock mode toggle
   const handleMockToggle = () => {
     clearTimeout(mockTimerRef.current);
     mockClickCountRef.current += 1;
@@ -43,13 +43,11 @@ export default function App() {
     setLoadingStep(0);
     setBudget(input.budget_inr || null);
 
-    // Simulate step progression
     const stepTimer1 = setTimeout(() => setLoadingStep(1), 1500);
     const stepTimer2 = setTimeout(() => setLoadingStep(2), 3000);
 
     try {
       const result = await parseContent(input, mockMode);
-
       setCart(result.cart || []);
       setUnavailableItems(result.unavailable_items || []);
       setTotalPrice(result.total_price_inr || 0);
@@ -71,32 +69,27 @@ export default function App() {
   const isEmpty = (!cart || cart.length === 0) && !isLoading;
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-screen bg-bg-deep flex flex-col font-sans overflow-hidden">
       {/* Top bar */}
-      <header className="flex items-center justify-between px-6 py-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
+      <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200 z-50 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--color-accent), #FF6B00)' }}>
-            <ShoppingCart size={16} className="text-bg-deep" />
+          <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-white shadow-sm">
+            <ShoppingCart size={16} />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-text-primary flex items-center gap-1">
+            <h1 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               Context-to-Cart
-              <span className="text-[10px] font-normal px-1.5 py-0.5 rounded-full bg-accent/10 text-accent">v1.0</span>
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">v2.0</span>
             </h1>
-            <p className="text-[10px] text-text-muted">Amazon Hackon 2026</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {mockMode && (
-            <motion.span
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-[10px] px-2 py-1 rounded-full bg-warning/15 text-warning font-medium"
-            >
+            <span className="text-[10px] px-2 py-1 rounded-full bg-orange-100 text-orange-700 font-bold border border-orange-200 tracking-wide uppercase">
               Mock Mode
-            </motion.span>
+            </span>
           )}
-          <button onClick={handleMockToggle} className="text-text-muted hover:text-accent transition-colors" title="">
+          <button onClick={handleMockToggle} className="text-slate-400 hover:text-slate-700 transition-colors p-2 rounded-full hover:bg-slate-100" title="Toggle Mock Mode">
             <Zap size={16} />
           </button>
         </div>
@@ -104,33 +97,46 @@ export default function App() {
 
       {/* Error banner */}
       {error && (
-        <div className="px-6 pt-3">
+        <div className="px-6 pt-4 shrink-0">
           <ErrorBanner error={error} onDismiss={() => setError(null)} />
         </div>
       )}
 
-      {/* Three-panel layout: responsive flex/grid */}
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-[380px_1fr] xl:grid-cols-[380px_1fr_320px] gap-4 p-4 overflow-y-auto xl:overflow-hidden">
-        <InputPanel onSubmit={handleSubmit} isLoading={isLoading} />
-        <CartPanel
-          cart={cart}
-          unavailableItems={unavailableItems}
-          totalPrice={totalPrice}
-          budgetExceeded={budgetExceeded}
-          budget={budget}
-          isLoading={isLoading}
-          loadingStep={loadingStep}
-          isEmpty={isEmpty}
-        />
-        <SummaryPanel
-          intentType={intentType}
-          contextSummary={contextSummary}
-          summary={summary}
-          cart={cart}
-          unavailableItems={unavailableItems}
-          totalPrice={totalPrice}
-          isEmpty={isEmpty}
-        />
+      {/* Three-panel layout */}
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1600px] w-full mx-auto p-4 md:p-6 min-h-0">
+        
+        {/* Left Column: Input */}
+        <div className="lg:col-span-4 xl:col-span-3 flex flex-col min-h-0 h-full">
+          <InputPanel onSubmit={handleSubmit} isLoading={isLoading} />
+        </div>
+
+        {/* Center Column: Cart */}
+        <div className="lg:col-span-5 xl:col-span-6 flex flex-col min-h-0 h-full">
+          <CartPanel
+            cart={cart}
+            unavailableItems={unavailableItems}
+            totalPrice={totalPrice}
+            budgetExceeded={budgetExceeded}
+            budget={budget}
+            isLoading={isLoading}
+            loadingStep={loadingStep}
+            isEmpty={isEmpty}
+          />
+        </div>
+
+        {/* Right Column: Summary */}
+        <div className="lg:col-span-3 xl:col-span-3 flex flex-col min-h-0 h-full">
+          <SummaryPanel
+            intentType={intentType}
+            contextSummary={contextSummary}
+            summary={summary}
+            cart={cart}
+            unavailableItems={unavailableItems}
+            totalPrice={totalPrice}
+            isEmpty={isEmpty}
+          />
+        </div>
+
       </main>
     </div>
   );

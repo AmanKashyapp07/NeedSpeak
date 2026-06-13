@@ -1,23 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-bg-deep: #131A22;
-  --color-bg-base: #232F3E;
-  --color-bg-surface: #37475A;
-  --color-bg-hover: #485769;
-  --color-accent: #FF9900;
-  --color-accent-hover: #E88B00;
-  --color-accent-glow: rgba(255, 153, 0, 0.15);
-  --color-text-primary: #F5F5F5;
-  --color-text-secondary: #AAB8C2;
-  --color-text-muted: #6B7D8E;
-  --color-success: #00A86B;
-  --color-danger: #E74C3C;
-  --color-warning: #F39C12;
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-glass: rgba(35, 47, 62, 0.7);
+  --color-bg-deep: #F8FAFC;
+  --color-bg-base: #F1F5F9;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-hover: #F1F5F9;
+  --color-accent: #10B981;
+  --color-accent-hover: #059669;
+  --color-accent-glow: rgba(16, 185, 129, 0.1);
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748B;
+  --color-success: #10B981;
+  --color-danger: #EF4444;
+  --color-warning: #F59E0B;
+  --color-border: #E2E8F0;
+  --color-glass: #FFFFFF;
   
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
 }
 
 /* Base styles */
@@ -44,37 +46,33 @@ html, body, #root {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-bg-hover);
+  background: #CBD5E1;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-muted);
+  background: #94A3B8;
 }
 
-/* Glass panel effect */
+/* Solid panel effect (Clean UI) */
 .glass-panel {
-  background: var(--color-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--color-bg-surface);
   border: 1px solid var(--color-border);
   border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  transition: all 300ms ease;
 }
 
-/* Gradient text */
+/* Gradient text - clean */
 .gradient-text {
-  background: linear-gradient(135deg, var(--color-accent) 0%, #FF6B00 100%);
+  background: linear-gradient(135deg, var(--color-accent) 0%, #059669 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Pulse animation for loading */
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
-}
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+/* Fluid animations */
+.fluid-transition {
+  transition: all 300ms ease;
 }
 
 /* Shimmer effect for skeleton loading */
@@ -85,13 +83,13 @@ html, body, #root {
 .skeleton {
   position: relative;
   overflow: hidden;
-  background: var(--color-bg-surface);
+  background: #E2E8F0;
   border-radius: 8px;
 }
 .skeleton::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
   animation: shimmer 1.5s infinite;
 }
