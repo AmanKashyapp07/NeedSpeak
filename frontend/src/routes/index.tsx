@@ -134,38 +134,9 @@ function Landing() {
         </div>
       </section>
 
-      {/* Feature bento */}
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-semibold tracking-tight">Everything in one engine</h2>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          14 capabilities working together — extraction, quantity reasoning, budget control,
-          alternatives, collaboration and review.
-        </p>
-        <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {featureBento.map((f, i) => (
-            <div
-              key={f.title}
-              className={`rounded-xl border border-border bg-card p-5 ${i === 0 ? "lg:col-span-2 lg:row-span-2 bg-foreground text-background" : ""}`}
-            >
-              <div
-                className={`text-xs font-medium uppercase tracking-wider ${i === 0 ? "text-brand" : "text-muted-foreground"}`}
-              >
-                {String(i + 1).padStart(2, "0")}
-              </div>
-              <div className="mt-2 text-lg font-semibold">{f.title}</div>
-              <p
-                className={`mt-2 text-sm ${i === 0 ? "text-background/70" : "text-muted-foreground"}`}
-              >
-                {f.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* CTA */}
-      <section className="mx-auto max-w-5xl px-4 pb-24 sm:px-6 lg:px-8">
-        <div className="rounded-3xl border border-border bg-foreground p-10 text-background sm:p-14">
+      <section className="mx-auto max-w-5xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center justify-center text-center rounded-3xl border border-border bg-foreground p-10 text-background sm:p-14 min-h-[320px]">
           <h3 className="text-3xl font-semibold tracking-tight">
             Stop building lists. Start describing.
           </h3>

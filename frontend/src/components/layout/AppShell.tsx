@@ -1,9 +1,10 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
 import { ShoppingCart, Sliders, Sun, Moon } from "lucide-react";
 import logo from "@/assets/needspeak-logo.png";
 import { useTheme } from "@/hooks/use-theme";
 import { loadHistory } from "@/lib/cart-history";
+import { getStoredAuth } from "@/routes/login";
 
 const nav = [
   { to: "/chat", label: "Chat" },
@@ -14,8 +15,15 @@ const nav = [
 
 export function AppShell({ children, noFooter = false }: { children: ReactNode; noFooter?: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
   const { theme, toggle } = useTheme();
   const [historyCount, setHistoryCount] = useState(0);
+
+  useEffect(() => {
+    if (!getStoredAuth() && pathname !== "/login") {
+      navigate({ to: "/login" });
+    }
+  }, [pathname, navigate]);
 
   // Refresh cart badge count whenever the component mounts or window focuses
   useEffect(() => {

@@ -157,6 +157,10 @@ async def parse_content(req: ParseRequest, request: Request):
             if req.input_type == InputType.TEXT:
                 raw_text = process_text_input(req.content)
 
+            elif req.input_type == InputType.WHATSAPP:
+                from app.ingestion.whatsapp_input import parse_whatsapp_forward
+                raw_text = parse_whatsapp_forward(process_text_input(req.content))
+
             elif req.input_type == InputType.URL:
                 url = req.content.strip()
 
@@ -388,6 +392,189 @@ async def transcribe_audio(request: Request, audio: UploadFile = File(...)):
         raise HTTPException(
             status_code=500,
             detail={"message": f"Transcription failed: {error_str}"},
+        )
+
+
+# ---------------------------------------------------------------------------
+# POST /api/parse-image — Image OCR Pipeline (Member 2, Feature 1)
+# ---------------------------------------------------------------------------
+@app.post("/api/parse-image")
+async def parse_image(
+    request: Request,
+    image: UploadFile = File(...),
+    budget_inr: float = None,
+):
+    """
+    Accept an image, extract text via Gemini Vision, run through pipeline.
+    Returns both the extracted text and the full pipeline result.
+    """
+    session_id = str(uuid.uuid4())
+    mock_mode = getattr(request.state, "mock_mode", False) or config.MOCK_MODE
+
+    # Read image bytes
+    image_bytes = await image.read()
+    mime_type = image.content_type or "image/jpeg"
+
+    logger.info(
+        f"[{session_id}] Image upload: {len(image_bytes)} bytes, mime={mime_type}"
+    )
+
+    if mock_mode:
+        # In mock mode, return a sample extraction
+        return {
+            "extracted_text": "milk 2L, basmati rice 1kg, onions 500g, tomatoes 6 pieces",
+            "session_id": session_id,
+            "hint": "Submit this text to /api/parse with input_type=text",
+        }
+
+    try:
+        from app.ingestion.image_input import extract_text_from_image
+
+        extracted_text = extract_text_from_image(image_bytes, mime_type)
+
+        if not extracted_text:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error_code": ErrorCode.NO_CONTENT.value,
+                    "message": "No food items or shopping items found in the image. "
+                               "Please upload an image of a recipe, shopping list, or food items.",
+                },
+            )
+
+        logger.info(f"[{session_id}] Extracted from image: '{extracted_text[:200]}'")
+
+        # Run through the full pipeline by creating a parse request
+        def run_image_pipeline():
+            # Re-use the exact same pipeline as /api/parse with TEXT input
+            from app.pipeline.extractor import extract_items
+            from app.pipeline.resolver import resolve_cart
+            from app.pipeline.summarizer import generate_summary
+
+            extraction = extract_items(extracted_text, None, mock_mode=mock_mode)
+
+            if extraction.error == "no_shoppable_content":
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "error_code": ErrorCode.NO_CONTENT.value,
+                        "message": "No shoppable items found in the extracted text from the image.",
+                    },
+                )
+
+            if extraction.error in ("extraction_failed", "bedrock_timeout"):
+                error_code = (
+                    ErrorCode.BEDROCK_TIMEOUT
+                    if extraction.error == "bedrock_timeout"
+                    else ErrorCode.EXTRACTION_FAILED
+                )
+                raise HTTPException(
+                    status_code=500,
+                    detail={
+                        "error_code": error_code.value,
+                        "message": "AI extraction failed. Please try again.",
+                    },
+                )
+
+            resolved_intent_groups = []
+            global_total_price = 0.0
+            global_budget_exceeded = False
+
+            budget_int = int(budget_inr) if budget_inr else None
+
+            for intent in extraction.intents:
+                cart_items, unavailable_items, intent_total_price, intent_budget_exceeded = resolve_cart(
+                    items=intent.items,
+                    budget_inr=budget_int,
+                    session_id=session_id,
+                    mock_mode=mock_mode,
+                )
+                global_total_price += intent_total_price
+                global_budget_exceeded = global_budget_exceeded or intent_budget_exceeded
+
+                resolved_intent_groups.append(IntentGroup(
+                    intent_type=intent.intent_type,
+                    context_summary=intent.context_summary,
+                    cart=cart_items,
+                    unavailable_items=unavailable_items,
+                ))
+
+            summary = generate_summary(
+                intent_groups=resolved_intent_groups,
+                total_price=global_total_price,
+                budget_inr=budget_int,
+                budget_exceeded=global_budget_exceeded,
+                mock_mode=mock_mode,
+            )
+
+            response_data = ParseResponse(
+                session_id=session_id,
+                confidence=extraction.confidence,
+                clarification_question=extraction.clarification_question,
+                intents=resolved_intent_groups,
+                total_price_inr=global_total_price,
+                budget_exceeded=global_budget_exceeded,
+                summary=summary,
+            )
+
+            # Store session
+            session_data = {
+                "session_id": session_id,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "input_type": "image",
+                "confidence": extraction.confidence,
+                "extracted_text_from_image": extracted_text,
+                "resolved_intents": [g.model_dump() for g in resolved_intent_groups],
+                "total_price_inr": global_total_price,
+                "budget_inr": budget_int,
+                "budget_exceeded": global_budget_exceeded,
+                "summary": summary,
+                "status": "completed",
+            }
+            save_session(session_data, mock_mode=mock_mode)
+            store_cart_result(session_id, session_data, mock_mode=mock_mode)
+
+            return {
+                "extracted_text": extracted_text,
+                **response_data.model_dump(),
+            }
+
+        return await asyncio.wait_for(
+            run_in_threadpool(run_image_pipeline), timeout=45.0
+        )
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail={"error_code": ErrorCode.NO_CONTENT.value, "message": str(e)},
+        )
+    except asyncio.TimeoutError:
+        logger.error(f"[{session_id}] Image pipeline timed out after 45 seconds.")
+        raise HTTPException(
+            status_code=504,
+            detail={
+                "error_code": ErrorCode.BEDROCK_TIMEOUT.value,
+                "message": "Image processing timed out. Please try again.",
+            },
+        )
+    except Exception as e:
+        error_str = str(e)
+        logger.error(f"[{session_id}] Image pipeline failed: {error_str}")
+
+        if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
+            raise HTTPException(
+                status_code=429,
+                detail={"message": "API rate limit reached. Please wait a minute and try again."},
+            )
+
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error_code": ErrorCode.INTERNAL_ERROR.value,
+                "message": f"Image processing failed: {error_str}",
+            },
         )
 
 

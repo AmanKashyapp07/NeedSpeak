@@ -129,7 +129,7 @@ function LoginPage() {
   useEffect(() => {
     const auth = getStoredAuth();
     if (auth?.token) {
-      navigate({ to: "/chat" });
+      navigate({ to: "/" });
     }
   }, [navigate]);
 
@@ -178,7 +178,7 @@ function LoginPage() {
 
       storeAuth(data.token, data.user);
       setSuccess("Signed in with Google!");
-      setTimeout(() => navigate({ to: "/chat" }), 800);
+      setTimeout(() => navigate({ to: "/" }), 800);
     } catch (e: any) {
       setError(e.message || "Google sign-in failed");
     } finally {
@@ -231,7 +231,16 @@ function LoginPage() {
         body: JSON.stringify(body),
       });
 
-      const data = await res.json();
+      let data;
+      const text = await res.text();
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        if (!res.ok) {
+          throw new Error(`Server error (${res.status}): Make sure the backend is running.`);
+        }
+        data = {};
+      }
 
       if (!res.ok) {
         throw new Error(data.message || data.detail?.message || "Something went wrong");
@@ -239,7 +248,7 @@ function LoginPage() {
 
       storeAuth(data.token, data.user);
       setSuccess(data.message || "Welcome!");
-      setTimeout(() => navigate({ to: "/chat" }), 800);
+      setTimeout(() => navigate({ to: "/" }), 800);
     } catch (e: any) {
       triggerShake(e.message || "Authentication failed");
     } finally {
