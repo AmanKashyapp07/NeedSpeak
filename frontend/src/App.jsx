@@ -23,7 +23,7 @@ export default function App() {
   const mockClickCountRef = useRef(0);
   const mockTimerRef = useRef(null);
 
-  // Hidden mock mode toggle: click the lightning bolt 5 times
+  // Hidden mock mode toggle
   const handleMockToggle = () => {
     clearTimeout(mockTimerRef.current);
     mockClickCountRef.current += 1;
@@ -92,7 +92,7 @@ export default function App() {
               background: 'var(--color-bg-tertiary)',
             }}
           >
-            v1.0
+            v2.0
           </span>
         </div>
 
