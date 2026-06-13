@@ -103,16 +103,44 @@ def generate_summary(
         else:
             logger.info("Using Google Gemini provider for summarization.")
             client = genai.Client(api_key=GEMINI_API_KEY)
-            response = client.models.generate_content(
-                model=GEMINI_MODEL_ID,
-                contents=user_prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=SUMMARY_SYSTEM_PROMPT,
-                    max_output_tokens=256,
-                    temperature=0.4,
-                )
-            )
-            summary = response.text.strip() if response.text else ""
+            
+            models_to_try = [GEMINI_MODEL_ID]
+            for m in ["gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-3.1-flash-lite"]:
+                if m not in models_to_try:
+                    models_to_try.append(m)
+                    
+            response = None
+            last_error = None
+            for model in models_to_try:
+                for attempt in range(3):
+                    try:
+                        logger.info(f"Attempting Gemini summarization with model={model} (attempt {attempt + 1})...")
+                        response = client.models.generate_content(
+                            model=model,
+                            contents=user_prompt,
+                            config=types.GenerateContentConfig(
+                                system_instruction=SUMMARY_SYSTEM_PROMPT,
+                                max_output_tokens=256,
+                                temperature=0.4,
+                            )
+                        )
+                        if response.text:
+                            logger.info(f"Gemini summarization succeeded with model={model}")
+                            break
+                        else:
+                            raise ValueError("Empty response text received")
+                    except Exception as e:
+                        last_error = e
+                        logger.warning(f"Gemini summarization model={model} attempt {attempt + 1} failed: {e}")
+                        import time
+                        time.sleep(1 * (attempt + 1))
+                if response and response.text:
+                    break
+            
+            if not response or not response.text:
+                raise last_error or RuntimeError("Gemini summarization failed for all models")
+                
+            summary = response.text.strip()
         logger.info(f"Summary generated: {summary[:80]}...")
         return summary
 

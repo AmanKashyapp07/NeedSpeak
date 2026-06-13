@@ -110,20 +110,45 @@ def _sanitize_json_response(raw: str) -> Optional[dict]:
 # Core Extraction
 # ---------------------------------------------------------------------------
 def _call_gemini(system_prompt: str, user_prompt: str) -> str:
-    """Invoke Gemini with the given prompts, return raw text response."""
+    """Invoke Gemini with retry and fallback models to handle transient 503/429 load spikes."""
+    import time
     client = genai.Client(api_key=GEMINI_API_KEY)
-    response = client.models.generate_content(
-        model=GEMINI_MODEL_ID,
-        contents=user_prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=system_prompt,
-            response_mime_type="application/json",
-            temperature=0.1,
-        )
-    )
-    if not response.text:
-        raise ValueError("Empty response from Gemini API")
-    return response.text
+    
+    # Try the configured model first, followed by reliable fallbacks
+    models_to_try = [GEMINI_MODEL_ID]
+    for m in ["gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-3.1-flash-lite"]:
+        if m not in models_to_try:
+            models_to_try.append(m)
+            
+    last_error = None
+    for model in models_to_try:
+        # Retry up to 3 times per model for transient errors
+        for attempt in range(3):
+            try:
+                logger.info(f"Attempting Gemini call with model={model} (attempt {attempt + 1})...")
+                response = client.models.generate_content(
+                    model=model,
+                    contents=user_prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_prompt,
+                        response_mime_type="application/json",
+                        temperature=0.1,
+                    )
+                )
+                if response.text:
+                    logger.info(f"Gemini call succeeded with model={model}")
+                    return response.text
+                else:
+                    raise ValueError("Empty response text received")
+            except Exception as e:
+                last_error = e
+                logger.warning(f"Gemini model={model} attempt {attempt + 1} failed: {e}")
+                # Wait before retrying (exponential backoff)
+                time.sleep(1 * (attempt + 1))
+                
+    # If all models/attempts failed, raise the final exception
+    raise last_error or RuntimeError("Gemini API call failed for all models")
+
 
 
 def _call_bedrock(system_prompt: str, user_prompt: str) -> str:
