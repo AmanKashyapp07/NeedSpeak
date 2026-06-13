@@ -33,12 +33,16 @@ function OccasionsPage() {
             <Link
               key={o.id}
               to="/chat"
+              search={{ prompt: o.prompt }}
               className="group rounded-2xl border border-border bg-card p-6 transition-all hover:border-foreground hover:shadow-soft"
             >
               <div className="text-4xl">{o.emoji}</div>
               <div className="mt-5 text-xl font-semibold">{o.name}</div>
               <p className="mt-2 text-sm text-muted-foreground">{o.desc}</p>
-              <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+              <div className="mt-4 rounded-lg bg-surface px-3 py-2">
+                <p className="text-xs text-muted-foreground italic line-clamp-2">"{o.prompt}"</p>
+              </div>
+              <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
                 <span className="text-xs text-muted-foreground">{o.items} items · adjustable</span>
                 <span className="text-sm font-medium text-foreground group-hover:text-brand">
                   Start →

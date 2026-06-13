@@ -38,6 +38,9 @@ import { saveToHistory, loadHistory, type CartHistoryEntry } from "@/lib/cart-hi
 import { useVoiceInput } from "@/hooks/use-voice-input";
 
 export const Route = createFileRoute("/chat")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    prompt: typeof search.prompt === "string" ? search.prompt : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Chat — NeedSpeak" },
@@ -212,11 +215,19 @@ function HistoryPanel({
 // ─── ChatPage ─────────────────────────────────────────────────────────────────
 
 function ChatPage() {
+  const { prompt: prefillPrompt } = Route.useSearch();
   const [phase, setPhase] = useState<Phase>("idle");
   const [text, setText] = useState(samplePrompts[0]);
   const [messages, setMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([
     { role: "assistant", text: "Describe your occasion or paste a recipe, and I'll build a cart for you." },
   ]);
+
+  // Pre-fill from occasion tile navigation
+  useEffect(() => {
+    if (prefillPrompt) {
+      setText(prefillPrompt);
+    }
+  }, [prefillPrompt]);
   const [cartData, setCartData] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [budgetInput, setBudgetInput] = useState<string>("");
