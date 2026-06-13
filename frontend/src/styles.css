@@ -58,9 +58,9 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   /* Typography */
-  --font-display: "Source Serif 4", ui-serif, Georgia, Cambria, "Times New Roman", serif;
+  --font-display: "Newsreader", ui-serif, Georgia, Cambria, "Times New Roman", serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
+  --font-serif: "Newsreader", ui-serif, Georgia, serif;
 
   /* Editorial-grade shadows: very soft, warm-tinted */
   --shadow-soft:
@@ -71,97 +71,98 @@
     0 16px 40px oklch(0.2 0.01 70 / 0.08);
 }
 
-/* ─── LIGHT — warm cream "Claude" palette ─────────────────────────────────── */
+/* ─── LIGHT — Anthropic warm beige palette ────────────────────────────────── */
 :root {
-  --radius: 0.625rem; /* tighter editorial radius */
+  --radius: 0.625rem;
 
-  --background: oklch(0.972 0.012 86); /* #FAF9F5 cream paper */
-  --foreground: oklch(0.22 0.012 50); /* warm near-black */
+  --background: oklch(0.955 0.015 85); /* #f3f0e8 — exact Anthropic beige */
+  --foreground: oklch(0.15 0.005 60); /* very dark warm black — Anthropic ink */
 
-  --ink: oklch(0.22 0.012 50);
-  --surface: oklch(0.945 0.014 84); /* slightly deeper cream for elevated cards */
+  --ink: oklch(0.15 0.005 60);
+  --surface: oklch(0.925 0.014 82); /* slightly deeper for cards/panels */
 
-  --card: oklch(0.985 0.008 86);
-  --card-foreground: oklch(0.22 0.012 50);
-  --popover: oklch(0.985 0.008 86);
-  --popover-foreground: oklch(0.22 0.012 50);
+  --card: oklch(0.97 0.012 85); /* a touch lighter than background */
+  --card-foreground: oklch(0.15 0.005 60);
+  --popover: oklch(0.97 0.012 85);
+  --popover-foreground: oklch(0.15 0.005 60);
 
-  --primary: oklch(0.22 0.012 50);
-  --primary-foreground: oklch(0.985 0.008 86);
+  --primary: oklch(0.15 0.005 60);
+  --primary-foreground: oklch(0.955 0.015 85);
 
-  --secondary: oklch(0.93 0.012 80);
-  --secondary-foreground: oklch(0.22 0.012 50);
+  --secondary: oklch(0.91 0.014 80);
+  --secondary-foreground: oklch(0.15 0.005 60);
 
-  --muted: oklch(0.93 0.012 80);
-  --muted-foreground: oklch(0.46 0.018 60); /* warm gray */
+  --muted: oklch(0.91 0.014 80);
+  --muted-foreground: oklch(0.45 0.012 60);
 
-  --accent: oklch(0.91 0.022 70);
-  --accent-foreground: oklch(0.22 0.012 50);
+  --accent: oklch(0.89 0.018 75);
+  --accent-foreground: oklch(0.15 0.005 60);
 
-  /* Claude burnt-orange / clay accent ~ #C96442 */
-  --brand: oklch(0.61 0.13 38);
-  --brand-foreground: oklch(0.985 0.008 86);
+  /* Anthropic uses a dark charcoal for CTAs, not a loud brand color.
+     We keep a subtle warm-clay accent for interactive highlights. */
+  --brand: oklch(0.55 0.1 40);
+  --brand-foreground: oklch(0.97 0.01 85);
 
-  --success: oklch(0.6 0.13 145);
+  --success: oklch(0.58 0.12 145);
 
-  --destructive: oklch(0.55 0.2 27);
-  --destructive-foreground: oklch(0.985 0.008 86);
+  --destructive: oklch(0.52 0.18 27);
+  --destructive-foreground: oklch(0.97 0.01 85);
 
-  --border: oklch(0.88 0.014 78);
-  --input: oklch(0.88 0.014 78);
-  --ring: oklch(0.61 0.13 38);
+  --border: oklch(0.87 0.012 78);
+  --input: oklch(0.87 0.012 78);
+  --ring: oklch(0.15 0.005 60); /* ring = ink color, not brand (Anthropic style) */
 
-  --chart-1: oklch(0.61 0.13 38);
-  --chart-2: oklch(0.55 0.1 220);
-  --chart-3: oklch(0.6 0.13 145);
-  --chart-4: oklch(0.65 0.13 320);
-  --chart-5: oklch(0.4 0.04 60);
+  --chart-1: oklch(0.55 0.1 40);
+  --chart-2: oklch(0.5 0.08 220);
+  --chart-3: oklch(0.58 0.12 145);
+  --chart-4: oklch(0.6 0.1 320);
+  --chart-5: oklch(0.35 0.03 60);
 
-  --sidebar: oklch(0.96 0.014 84);
-  --sidebar-foreground: oklch(0.22 0.012 50);
-  --sidebar-primary: oklch(0.22 0.012 50);
-  --sidebar-primary-foreground: oklch(0.985 0.008 86);
-  --sidebar-accent: oklch(0.91 0.022 70);
-  --sidebar-accent-foreground: oklch(0.22 0.012 50);
-  --sidebar-border: oklch(0.88 0.014 78);
-  --sidebar-ring: oklch(0.61 0.13 38);
+  --sidebar: oklch(0.94 0.014 83);
+  --sidebar-foreground: oklch(0.15 0.005 60);
+  --sidebar-primary: oklch(0.15 0.005 60);
+  --sidebar-primary-foreground: oklch(0.955 0.015 85);
+  --sidebar-accent: oklch(0.89 0.018 75);
+  --sidebar-accent-foreground: oklch(0.15 0.005 60);
+  --sidebar-border: oklch(0.87 0.012 78);
+  --sidebar-ring: oklch(0.15 0.005 60);
 }
 
-/* ─── DARK — espresso warm dark mode ──────────────────────────────────────── */
+/* ─── DARK — warm dark mode (Anthropic-inspired) ─────────────────────────── */
 .dark {
-  --background: oklch(0.19 0.012 60); /* warm espresso */
-  --foreground: oklch(0.94 0.008 80);
+  --background: oklch(0.16 0.01 65);
+  --foreground: oklch(0.92 0.008 80);
 
-  --ink: oklch(0.94 0.008 80);
-  --surface: oklch(0.235 0.014 60);
+  --ink: oklch(0.92 0.008 80);
+  --surface: oklch(0.21 0.012 60);
 
-  --card: oklch(0.225 0.014 60);
-  --card-foreground: oklch(0.94 0.008 80);
-  --popover: oklch(0.225 0.014 60);
-  --popover-foreground: oklch(0.94 0.008 80);
+  --card: oklch(0.2 0.012 60);
+  --card-foreground: oklch(0.92 0.008 80);
+  --popover: oklch(0.2 0.012 60);
+  --popover-foreground: oklch(0.92 0.008 80);
 
-  --primary: oklch(0.94 0.008 80);
-  --primary-foreground: oklch(0.19 0.012 60);
+  --primary: oklch(0.92 0.008 80);
+  --primary-foreground: oklch(0.16 0.01 65);
 
-  --secondary: oklch(0.26 0.014 60);
-  --secondary-foreground: oklch(0.94 0.008 80);
+  --secondary: oklch(0.24 0.012 60);
+  --secondary-foreground: oklch(0.92 0.008 80);
 
-  --muted: oklch(0.26 0.014 60);
-  --muted-foreground: oklch(0.7 0.012 70);
+  --muted: oklch(0.24 0.012 60);
+  --muted-foreground: oklch(0.65 0.01 70);
 
-  --accent: oklch(0.28 0.018 60);
-  --accent-foreground: oklch(0.94 0.008 80);
+  --accent: oklch(0.26 0.015 60);
+  --accent-foreground: oklch(0.92 0.008 80);
 
-  --brand: oklch(0.7 0.13 40); /* slightly brighter clay in dark */
-  --brand-foreground: oklch(0.19 0.012 60);
+  --brand: oklch(0.65 0.1 40);
+  --brand-foreground: oklch(0.16 0.01 65);
 
-  --success: oklch(0.7 0.14 145);
-  --destructive: oklch(0.65 0.18 27);
-  --destructive-foreground: oklch(0.94 0.008 80);
+  --success: oklch(0.68 0.12 145);
+  --destructive: oklch(0.62 0.16 27);
+  --destructive-foreground: oklch(0.92 0.008 80);
 
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.7 0.13 40);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.92 0.008 80);
 }
 
 @layer base {
