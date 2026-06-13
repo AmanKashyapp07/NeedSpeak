@@ -104,11 +104,11 @@
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 8.1 | CompareCart modal in ReviewCart page | ✅ | Budget slider + over/under status shown |
-| 8.2 | "What if budget lower?" diff | 🟡 | Slider changes the display total but does NOT re-run the resolver |
-| 8.3 | "What if attendees increase?" diff | ❌ | Not implemented |
-| 8.4 | "What if I went vegan?" diff | ❌ | Not implemented |
-| 8.5 | Added / Removed / Swapped items diff view | ❌ | Only a number comparison, no actual item diff |
+| 8.1 | CompareCart modal in ReviewCart page | ✅ | Budget slider + attendees + dietary controls |
+| 8.2 | "What if budget lower?" diff | ✅ | Slider re-runs /api/parse with new budget and shows diff |
+| 8.3 | "What if attendees increase?" diff | ✅ | +/- buttons adjust attendees, re-runs pipeline |
+| 8.4 | "What if I went vegan?" diff | ✅ | Dietary toggle (any/veg/vegan/jain) re-runs pipeline |
+| 8.5 | Added / Removed / Swapped items diff view | ✅ | cart-diff.ts utility shows green/red/amber diff items |
 
 ---
 
@@ -206,7 +206,7 @@
 ### Cart Intelligence
 | # | Feature | Priority | Why |
 |---|---------|----------|-----|
-| B.7 | **Re-run resolver on CompareCart** — when the user adjusts budget/people in CompareCart, POST to `/api/parse` again with new params and diff the two responses | 🔴 High | Current slider is purely cosmetic |
+| B.7 | **Re-run resolver on CompareCart** — when the user adjusts budget/people in CompareCart, POST to `/api/parse` again with new params and diff the two responses | ✅ Done | Implemented with debounced re-run on slider/button changes |
 | B.8 | **Accept / Reject alternative** — for each substituted item, show the original alongside the substitute with a one-tap swap button | ✅ Done | Backend now returns `pending_substitution` for user choice |
 | B.9 | **Item removal** — let the user remove items from the live cart and see the total update | ✅ Done | X button on hover, filtered totals |
 | B.10 | **Re-order suggestion** — "You built a similar cart 2 weeks ago. Add those items again?" using localStorage history | ✅ Done | `findSimilarCart()` + banner |
@@ -244,16 +244,16 @@
 | Multi-Intent (Pillar 5) | 4 | 0 | 0 |
 | SplitCart (Pillar 6) | 1 | 3 | 2 |
 | GoalCart (Pillar 7) | 5 | 0 | 0 |
-| CompareCart (Pillar 8) | 1 | 1 | 3 |
+| CompareCart (Pillar 8) | 5 | 0 | 0 |
 | Preferences (Pillar 9) | 1 | 3 | 1 |
 | Smart Alternatives (Pillar 10) | 3 | 0 | 0 |
 | Explainability (Pillar 11) | 3 | 0 | 0 |
 | Confidence Layer (Pillar 12) | 4 | 0 | 0 |
 | ReviewCart (Pillar 13) | 4 | 1 | 0 |
 | Infrastructure | 14 | 0 | 3 |
-| **Total** | **61** | **11** | **10** |
+| **Total** | **65** | **7** | **10** |
 
-**Overall completion: ~74% done, ~13% partial, ~12% not started.**
+**Overall completion: ~79% done, ~9% partial, ~12% not started.**
 
 ---
 
