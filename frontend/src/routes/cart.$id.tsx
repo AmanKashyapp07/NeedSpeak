@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeftRight, Check, ChevronDown, Info, Sparkles, TrendingDown, Wallet } from "lucide-react";
+import { ArrowLeftRight, Check, ChevronDown, Info, Sparkles, TrendingDown, Wallet, Loader2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/cart/$id")({
   head: () => ({
@@ -20,72 +19,55 @@ function CartPage() {
   const { id } = Route.useParams();
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [whatIfBudget, setWhatIfBudget] = useState(1500);
 
+  // Fetch session data from the backend
   useEffect(() => {
-    fetch(`/api/session/${id}`)
-      .then(res => res.json())
-      .then(data => {
+    const fetchSession = async () => {
+      try {
+        const res = await fetch(`/api/session/${id}`);
+        if (!res.ok) {
+          throw new Error(res.status === 404 ? "Session not found" : `Error ${res.status}`);
+        }
+        const data = await res.json();
         setSession(data);
+        if (data.budget_inr) setWhatIfBudget(data.budget_inr);
+      } catch (e: any) {
+        setError(e.message || "Failed to load session");
+      } finally {
         setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
+      }
+    };
+    fetchSession();
   }, [id]);
 
-  const [compareOpen, setCompareOpen] = useState(false);
-  const [whatIfBudget, setWhatIfBudget] = useState(1200);
+  const cartItems = session?.cart_items || session?.cart || [];
+  const budget = session?.budget_inr || 1500;
+  const total = session?.total_price_inr || cartItems.reduce((s: number, it: any) => s + (it.total_price_inr || 0), 0);
+  const budgetPct = Math.min(100, (total / budget) * 100);
 
   if (loading) {
-    return <AppShell><div className="flex items-center justify-center p-20 text-muted-foreground">Loading cart details...</div></AppShell>;
+    return (
+      <AppShell>
+        <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-brand" />
+        </div>
+      </AppShell>
+    );
   }
 
-  if (!session) {
-    return <AppShell><div className="flex items-center justify-center p-20 text-muted-foreground">Cart not found</div></AppShell>;
+  if (error || !session) {
+    return (
+      <AppShell>
+        <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center gap-4 text-center">
+          <div className="text-lg font-semibold">Cart not found</div>
+          <div className="text-sm text-muted-foreground">{error || "This session does not exist."}</div>
+        </div>
+      </AppShell>
+    );
   }
-
-  const updateItemQuantity = (intentIdx: number, sku: string, delta: number) => {
-    if (!session) return;
-    const newSession = JSON.parse(JSON.stringify(session));
-    const intentGroup = newSession.resolved_intents[intentIdx];
-    if (!intentGroup) return;
-    
-    const itemIdx = intentGroup.cart.findIndex((it: any) => it.sku === sku);
-    if (itemIdx === -1) return;
-    
-    const item = intentGroup.cart[itemIdx];
-    const newQty = item.quantity_units + delta;
-    
-    if (newQty <= 0) {
-      intentGroup.cart.splice(itemIdx, 1);
-    } else {
-      item.quantity_units = newQty;
-      item.total_price_inr = newQty * item.price_per_unit_inr;
-    }
-    
-    // Recompute total price for the session
-    let newTotal = 0;
-    newSession.resolved_intents.forEach((group: any) => {
-      group.cart.forEach((it: any) => {
-        newTotal += it.total_price_inr;
-      });
-    });
-    newSession.total_price_inr = newTotal;
-    
-    setSession(newSession);
-  };
-
-  const budget = session.budget_inr || 1500;
-  const allItems = session.resolved_intents?.flatMap((i: any) => i.cart) || [];
-  
-  const total = useMemo(
-    () => allItems.reduce((s: number, it: any) => s + it.total_price_inr, 0),
-    [allItems]
-  );
-
-  const budgetPct = Math.min(100, (total / budget) * 100);
-  const potentialSavings = 0; // Not fully implemented in backend yet
 
   return (
     <AppShell>
@@ -93,8 +75,12 @@ function CartPage() {
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
           <div className="min-w-0">
             <div className="text-xs uppercase tracking-wider text-muted-foreground">ReviewCart</div>
-            <h1 className="mt-1 truncate text-3xl font-semibold tracking-tight">Your Cart</h1>
-            <p className="mt-1 text-sm text-muted-foreground">budget ₹{budget}</p>
+            <h1 className="mt-1 truncate text-3xl font-semibold tracking-tight">
+              {session.context_summary || session.intent_type || "Your Cart"}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {cartItems.length} items · budget ₹{budget} · total ₹{total}
+            </p>
           </div>
           <button
             onClick={() => setCompareOpen(true)}
@@ -107,70 +93,55 @@ function CartPage() {
 
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
           {/* Items */}
-          <div className="space-y-6">
-            {session.resolved_intents?.map((intentGroup: any, idx: number) => (
-              <div key={idx} className="space-y-3">
-                <div className="text-lg font-semibold border-b border-border pb-2">{intentGroup.intent_type}</div>
-                {intentGroup.cart?.map((it: any) => {
-                  return (
-                    <div key={it.sku || it.name} className="rounded-2xl border border-border bg-card">
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 p-4">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">{it.brand}</span>
-                            {it.substituted && (
-                              <span className="rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-medium text-success">Substituted</span>
-                            )}
-                          </div>
-                          <div className="mt-0.5 truncate text-base font-medium">{it.name}</div>
-                          
-                          <div className="mt-2 flex items-center gap-2">
-                            <div className="flex items-center rounded-lg border border-border bg-surface text-xs font-semibold overflow-hidden">
-                              <button 
-                                onClick={() => updateItemQuantity(idx, it.sku, -1)}
-                                className="px-2.5 py-1 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer select-none"
-                              >
-                                -
-                              </button>
-                              <span className="px-2.5 font-mono text-xs min-w-[14px] text-center select-none">{it.quantity_units}</span>
-                              <button 
-                                onClick={() => updateItemQuantity(idx, it.sku, 1)}
-                                className="px-2.5 py-1 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer select-none"
-                              >
-                                +
-                              </button>
-                            </div>
-                            <span className="text-xs text-muted-foreground">· {it.category}</span>
-                          </div>
-
-                          {/* Why */}
-                          <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-1 text-xs text-muted-foreground">
-                            <Info className="h-3.5 w-3.5 text-brand" />
-                            Why? {it.substituted ? it.substitution_reason : `Matched from: ${it.matched_from?.join(", ") || it.name}`}
-                          </div>
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <div className="text-lg font-semibold">₹{it.total_price_inr}</div>
-                        </div>
-                      </div>
+          <div className="space-y-3">
+            {cartItems.map((it: any, idx: number) => (
+              <div key={it.sku || idx} className="rounded-2xl border border-border bg-card">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 p-4">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{it.brand}</span>
+                      {it.substituted && (
+                        <span className="rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-medium text-success">Substituted</span>
+                      )}
                     </div>
-                  );
-                })}
-                {intentGroup.unavailable_items?.length > 0 && (
-                  <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 mt-2">
-                    <div className="text-sm font-semibold text-destructive mb-2">Unavailable Items</div>
-                    <ul className="text-xs text-destructive/80 space-y-1">
-                      {intentGroup.unavailable_items.map((it: any, i: number) => (
-                        <li key={i}>• {it.name} - {it.reason}</li>
-                      ))}
-                    </ul>
+                    <div className="mt-0.5 truncate text-base font-medium">{it.name}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {it.quantity_units} × {it.unit_quantity}{it.unit}
+                    </div>
+
+                    {/* Why */}
+                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-1 text-xs text-muted-foreground">
+                      <Info className="h-3.5 w-3.5 text-brand" />
+                      {it.substituted
+                        ? `Substituted: ${it.substitution_reason || "better match"}`
+                        : it.matched_from?.length > 0
+                          ? `Matched from: ${it.matched_from.join(", ")}`
+                          : "Matched from catalog"}
+                    </div>
                   </div>
-                )}
+                  <div className="shrink-0 text-right">
+                    <div className="text-lg font-semibold">₹{it.total_price_inr}</div>
+                    <div className="text-xs text-muted-foreground">₹{it.price_per_unit_inr}/unit</div>
+                  </div>
+                </div>
               </div>
             ))}
+
+            {/* Unavailable items */}
+            {(session.unavailable_items?.length > 0) && (
+              <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+                <div className="mb-3 text-xs font-medium uppercase tracking-wider text-destructive">Unavailable items</div>
+                {session.unavailable_items.map((it: any, idx: number) => (
+                  <div key={idx} className="flex items-center gap-2 py-1.5 text-sm">
+                    <span className="font-medium">{it.name}</span>
+                    <span className="text-xs text-muted-foreground">— {it.reason?.replace(/_/g, " ")}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Sidebar: budget + goal + review */}
+          {/* Sidebar: budget + review */}
           <aside className="space-y-4">
             <div className="rounded-2xl border border-border bg-card p-5">
               <div className="flex items-center gap-2 text-sm">
@@ -192,36 +163,28 @@ function CartPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <div className="flex items-center gap-2 text-sm">
-                <Sparkles className="h-4 w-4 text-brand" />
-                <span className="font-medium">GoalCart suggestions</span>
+            {/* Summary */}
+            {session.summary && (
+              <div className="rounded-2xl border border-border bg-card p-5">
+                <div className="flex items-center gap-2 text-sm">
+                  <Sparkles className="h-4 w-4 text-brand" />
+                  <span className="font-medium">Summary</span>
+                </div>
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{session.summary}</p>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">You're in control. Budget optimization active.</p>
-              <ul className="mt-3 space-y-2">
-                {allItems.filter((i: any) => i.substituted).map((it: any, i: number) => (
-                  <li key={i} className="flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2 text-xs">
-                    <span className="min-w-0 truncate">Substituted for {it.category}</span>
-                    <span className="shrink-0 font-medium text-success">Cheaper alt</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            )}
 
             <div className="rounded-2xl border border-border bg-card p-5">
               <div className="text-sm font-medium">Final review</div>
               <ul className="mt-3 space-y-2 text-xs text-muted-foreground">
-                {["Assumptions look right", "Quantities matched", "Budget within range"].map((q) => (
+                {["Assumptions look right", "Quantities match attendees", "Budget within range", "Reviewed alternatives"].map((q) => (
                   <li key={q} className="flex items-center gap-2">
                     <Check className="h-3.5 w-3.5 text-brand" />
                     {q}
                   </li>
                 ))}
               </ul>
-              <button 
-                onClick={() => toast.success("Checkout successful! Mock order placed.")}
-                className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg bg-brand text-sm font-semibold text-brand-foreground hover:bg-brand/90"
-              >
+              <button className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg bg-brand text-sm font-semibold text-brand-foreground hover:bg-brand/90">
                 Proceed to checkout
               </button>
             </div>
@@ -244,7 +207,7 @@ function CartPage() {
               <input
                 type="range"
                 min={500}
-                max={3000}
+                max={5000}
                 step={100}
                 value={whatIfBudget}
                 onChange={(e) => setWhatIfBudget(Number(e.target.value))}
@@ -254,14 +217,24 @@ function CartPage() {
 
             <div className="mt-5 space-y-2 text-sm">
               <div className="flex items-center justify-between rounded-lg bg-surface px-3 py-2">
-                <span className="text-muted-foreground">New estimated total</span>
-                <span className="font-semibold">₹{Math.round(total * (whatIfBudget / budget))}</span>
+                <span className="text-muted-foreground">Current total</span>
+                <span className="font-semibold">₹{total}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-surface px-3 py-2">
+                <span className="text-muted-foreground">New budget</span>
+                <span className="font-semibold">₹{whatIfBudget}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-surface px-3 py-2">
+                <span className="text-muted-foreground">Status</span>
+                <span className={`font-semibold ${total > whatIfBudget ? "text-destructive" : "text-success"}`}>
+                  {total > whatIfBudget ? `₹${total - whatIfBudget} over` : `₹${whatIfBudget - total} under`}
+                </span>
               </div>
             </div>
 
             <div className="mt-6 flex justify-end gap-2">
               <button onClick={() => setCompareOpen(false)} className="h-10 rounded-lg border border-border bg-background px-4 text-sm hover:bg-surface">Close</button>
-              <button onClick={() => { setCompareOpen(false); toast.info("CompareCart simulation applied. Backend integration coming soon."); }} className="h-10 rounded-lg bg-foreground px-4 text-sm font-medium text-background hover:bg-foreground/90">Apply changes</button>
+              <button onClick={() => setCompareOpen(false)} className="h-10 rounded-lg bg-foreground px-4 text-sm font-medium text-background hover:bg-foreground/90">Apply changes</button>
             </div>
           </div>
         </div>

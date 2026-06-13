@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
-import { ShoppingCart, Sliders, Sun, Moon } from "lucide-react";
+import type { ReactNode } from "react";
+import { ShoppingCart, Sliders } from "lucide-react";
 import logo from "@/assets/needspeak-logo.png";
 
 const nav = [
@@ -12,28 +12,6 @@ const nav = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("theme");
-      if (stored === "light" || stored === "dark") return stored;
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    }
-    return "light";
-  });
-
-  useEffect(() => {
-    const root = window.document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
-  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -62,14 +40,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
           </nav>
           <div className="ml-auto flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-surface hover:text-foreground transition-colors"
-              title="Toggle theme"
-              aria-label="Toggle theme"
-            >
-              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
             <Link
               to="/preferences"
               className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm text-muted-foreground hover:bg-surface hover:text-foreground"
@@ -84,7 +54,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               <ShoppingCart className="h-4 w-4" />
               Cart
-              <span className="rounded bg-brand px-1.5 text-xs text-brand-foreground font-sans">6</span>
+              <span className="rounded bg-brand px-1.5 text-xs text-brand-foreground">6</span>
             </Link>
           </div>
         </div>
