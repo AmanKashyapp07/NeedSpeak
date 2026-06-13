@@ -331,9 +331,10 @@ async def health_check(request: Request):
     dynamo_ok = check_dynamodb_health(mock_mode=mock_mode)
     s3_ok = check_s3_health(mock_mode=mock_mode)
 
-    # Bedrock health: try a minimal call (skip in mock mode)
+    # Bedrock health: only relevant when Bedrock is the active provider and
+    # AWS is not mocked. Skip entirely for Gemini / mocked-AWS setups.
     bedrock_ok = True
-    if not mock_mode:
+    if config.LLM_PROVIDER == "bedrock" and not config.MOCK_AWS and not mock_mode:
         try:
             import boto3
             import json

@@ -65,6 +65,11 @@ def _decimal_to_native(obj):
 _product_cache: list[dict] = []
 _cache_loaded = False
 
+# In-memory session store used when AWS is mocked, so the Review Cart page
+# (GET /api/session/{id}) can round-trip within the running server without
+# touching DynamoDB.
+_mock_session_store: dict[str, dict] = {}
+
 
 def load_all_products(mock_mode: Optional[bool] = None) -> list[dict]:
     """
@@ -130,7 +135,10 @@ def save_session(session_data: dict, mock_mode: Optional[bool] = None) -> None:
     """Save a session record to CartSessions table."""
     is_mock = MOCK_AWS or (mock_mode if mock_mode is not None else False)
     if is_mock:
-        logger.info(f"[MOCK] Would save session: {session_data.get('session_id')}")
+        sid = session_data.get("session_id")
+        # Keep it in memory so GET /api/session/{id} can return the full cart.
+        _mock_session_store[sid] = session_data
+        logger.info(f"[MOCK] Stored session in memory: {sid}")
         return
 
     table = _get_sessions_table()
@@ -144,7 +152,8 @@ def get_session(session_id: str, mock_mode: Optional[bool] = None) -> Optional[d
     """Retrieve a session by ID."""
     is_mock = MOCK_AWS or (mock_mode if mock_mode is not None else False)
     if is_mock:
-        return _get_mock_session(session_id)
+        # Return the real stored session if we have it; otherwise a stub.
+        return _mock_session_store.get(session_id) or _get_mock_session(session_id)
 
     table = _get_sessions_table()
     response = table.get_item(Key={"session_id": session_id})

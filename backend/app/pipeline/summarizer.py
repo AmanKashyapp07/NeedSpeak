@@ -105,7 +105,7 @@ def generate_summary(
             client = genai.Client(api_key=GEMINI_API_KEY)
             
             models_to_try = [GEMINI_MODEL_ID]
-            for m in ["gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-3.1-flash-lite"]:
+            for m in ["gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"]:
                 if m not in models_to_try:
                     models_to_try.append(m)
                     
