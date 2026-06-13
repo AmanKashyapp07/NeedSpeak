@@ -22,28 +22,30 @@ This writes 80 realistic Indian product SKUs to DynamoDB. Safe to re-run.
 ### 2. Configure Environment
 Create a `.env` file in the `backend/` directory based on the following structure:
 ```env
-# Active LLM Provider: choose 'gemini' or 'bedrock'
-LLM_PROVIDER=gemini
-
-# Google Gemini API Config (Required if LLM_PROVIDER=gemini)
-GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_MODEL_ID=gemini-2.5-flash
-
-# AWS Region (used for Bedrock, DynamoDB, S3 if LLM_PROVIDER=bedrock)
+# AWS Region (used for Bedrock, DynamoDB, S3)
 AWS_REGION=us-east-1
 
-# Amazon Bedrock Model ID (Required if LLM_PROVIDER=bedrock)
+# Amazon Bedrock Model ID
+# Use the full inference profile ARN if you have one configured,
+# otherwise the base model ID works for testing.
 BEDROCK_MODEL_ID=anthropic.claude-sonnet-4-6
 
-# DynamoDB Tables (Bypassed if MOCK_MODE=1)
+# DynamoDB Tables
 DYNAMODB_TABLE_PRODUCTS=ProductCatalog
 DYNAMODB_TABLE_SESSIONS=CartSessions
 
-# S3 Bucket (Bypassed if MOCK_MODE=1)
+# S3 Bucket
 S3_BUCKET=pulse-cart-sessions-shivam-2026
 
-# Mock Mode — Set to 1 to bypass all live calls (returns realistic dummy data)
+# Mock Mode — Set to 1 to bypass ALL AWS/live calls (Bedrock, DynamoDB, S3)
+# Returns realistic dummy data. Essential for running without AWS credentials.
 MOCK_MODE=1
+
+# Google Gemini API Key
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Active LLM Provider: choose 'gemini' or 'bedrock'
+LLM_PROVIDER=gemini
 ```
 
 ### 3. Start the Backend
