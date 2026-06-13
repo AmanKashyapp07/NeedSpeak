@@ -101,12 +101,36 @@ function ChatPage() {
 
       const data = await res.json();
 
-      setCartData(data);
-      
+      // Backend returns a multi-intent shape:
+      //   { intents: [{ intent_type, context_summary, cart[], unavailable_items[] }],
+      //     confidence, clarification_question, total_price_inr, budget_exceeded, summary }
+      // Flatten it into the single-cart view this pane renders.
+      const intents: any[] = data.intents ?? [];
+      const allCartItems = intents.flatMap((g: any) => g.cart ?? []);
+      const allUnavailable = intents.flatMap((g: any) => g.unavailable_items ?? []);
+      const intentType = intents.map((g: any) => g.intent_type).filter(Boolean).join(", ");
+      const contextSummary = intents.map((g: any) => g.context_summary).filter(Boolean).join(" · ");
+
+      // Low-confidence inputs come back with a clarification question and no cart.
+      if (data.confidence === "low" && data.clarification_question) {
+        setMessages((m) => [...m, { role: "assistant", text: data.clarification_question }]);
+        setPhase("idle");
+        return;
+      }
+
+      // Normalize to the flat shape the UI below consumes.
+      setCartData({
+        ...data,
+        cart: allCartItems,
+        unavailable_items: allUnavailable,
+        intent_type: intentType || "shopping",
+        context_summary: contextSummary,
+      });
+
       // Build a rich summary message
-      const itemCount = data.cart?.length ?? 0;
-      const unavailCount = data.unavailable_items?.length ?? 0;
-      let summaryText = data.summary || `I found ${itemCount} items for your ${data.intent_type || "shopping"} list, totaling Rs.${data.total_price_inr}.`;
+      const itemCount = allCartItems.length;
+      const unavailCount = allUnavailable.length;
+      let summaryText = data.summary || `I found ${itemCount} items for your ${intentType || "shopping"} list, totaling Rs.${data.total_price_inr}.`;
       if (unavailCount > 0) {
         summaryText += ` (${unavailCount} item${unavailCount > 1 ? "s" : ""} unavailable)`;
       }

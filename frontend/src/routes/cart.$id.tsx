@@ -43,7 +43,17 @@ function CartPage() {
     fetchSession();
   }, [id]);
 
-  const cartItems = session?.cart_items || session?.cart || [];
+  // Session stores the resolved cart under `resolved_intents` (multi-intent shape).
+  // Flatten across intents; fall back to legacy flat fields for older sessions.
+  const resolvedIntents: any[] = session?.resolved_intents ?? [];
+  const cartItems = resolvedIntents.length > 0
+    ? resolvedIntents.flatMap((g: any) => g.cart ?? [])
+    : (session?.cart_items || session?.cart || []);
+  const unavailableItems = resolvedIntents.length > 0
+    ? resolvedIntents.flatMap((g: any) => g.unavailable_items ?? [])
+    : (session?.unavailable_items ?? []);
+  const intentSummary = resolvedIntents.map((g: any) => g.context_summary).filter(Boolean).join(" · ");
+  const intentTypeLabel = resolvedIntents.map((g: any) => g.intent_type).filter(Boolean).join(", ");
   const budget = session?.budget_inr || 1500;
   const total = session?.total_price_inr || cartItems.reduce((s: number, it: any) => s + (it.total_price_inr || 0), 0);
   const budgetPct = Math.min(100, (total / budget) * 100);
@@ -76,7 +86,7 @@ function CartPage() {
           <div className="min-w-0">
             <div className="text-xs uppercase tracking-wider text-muted-foreground">ReviewCart</div>
             <h1 className="mt-1 truncate text-3xl font-semibold tracking-tight">
-              {session.context_summary || session.intent_type || "Your Cart"}
+              {intentSummary || intentTypeLabel || "Your Cart"}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {cartItems.length} items · budget ₹{budget} · total ₹{total}
@@ -128,10 +138,10 @@ function CartPage() {
             ))}
 
             {/* Unavailable items */}
-            {(session.unavailable_items?.length > 0) && (
+            {(unavailableItems.length > 0) && (
               <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
                 <div className="mb-3 text-xs font-medium uppercase tracking-wider text-destructive">Unavailable items</div>
-                {session.unavailable_items.map((it: any, idx: number) => (
+                {unavailableItems.map((it: any, idx: number) => (
                   <div key={idx} className="flex items-center gap-2 py-1.5 text-sm">
                     <span className="font-medium">{it.name}</span>
                     <span className="text-xs text-muted-foreground">— {it.reason?.replace(/_/g, " ")}</span>
