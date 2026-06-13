@@ -74,6 +74,30 @@ export const occasions = [
     items: 26,
     prompt: "Diwali hosting at home for 20 guests. Need sweets, dry fruits, diyas, puja samagri and gift boxes. Budget ₹5000.",
   },
+  {
+    id: "picnic",
+    name: "Picnic / Outing",
+    emoji: "🧺",
+    desc: "Sandwiches, drinks, disposables for outdoor fun",
+    items: 15,
+    prompt: "Picnic for 6 friends at a park. Need sandwich bread, cheese, juice boxes, chips, paper napkins and a disposable tablecloth. Budget ₹800.",
+  },
+  {
+    id: "baby-shower",
+    name: "Baby Shower",
+    emoji: "👶",
+    desc: "Pastries, decor, gifts, mocktails",
+    items: 20,
+    prompt: "Baby shower celebration for 25 guests. Need pastries, mocktail ingredients, balloons, pastel decor, return gifts and finger food. Budget ₹4000.",
+  },
+  {
+    id: "exam-prep",
+    name: "Exam Season Survival",
+    emoji: "📚",
+    desc: "Energy snacks, coffee, quick meals for late nights",
+    items: 16,
+    prompt: "Exam season supplies for 1 student, 2 weeks. Need instant coffee, biscuits, Maggi noodles, energy bars, juice and dry fruits for late-night study. Budget ₹600.",
+  },
 ];
 
 export const iplCart: Cart = {

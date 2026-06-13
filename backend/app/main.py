@@ -312,7 +312,7 @@ async def parse_content(req: ParseRequest, request: Request):
 # POST /api/transcribe — Voice-to-Text via Gemini
 # ---------------------------------------------------------------------------
 @app.post("/api/transcribe")
-async def transcribe_audio(audio: UploadFile = File(...), request: Request = None):
+async def transcribe_audio(request: Request, audio: UploadFile = File(...)):
     """
     Accept an audio file (webm/opus) and return transcribed text using Gemini.
     Used by the frontend voice input feature.
