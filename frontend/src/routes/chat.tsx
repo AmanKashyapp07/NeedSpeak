@@ -7,6 +7,8 @@ import {
   Image as ImageIcon,
   IndianRupee,
   Link as LinkIcon,
+  Mic,
+  MicOff,
   Minus,
   Paperclip,
   Plus,
@@ -33,6 +35,7 @@ import {
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { samplePrompts } from "@/lib/mock/needspeak";
 import { saveToHistory, loadHistory, type CartHistoryEntry } from "@/lib/cart-history";
+import { useVoiceInput } from "@/hooks/use-voice-input";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
@@ -220,6 +223,14 @@ function ChatPage() {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [historyOpen, setHistoryOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Voice input via Web Speech API
+  const voice = useVoiceInput({
+    lang: "en-IN",
+    onFinalResult: (transcript) => {
+      setText((prev) => (prev ? prev + " " + transcript : transcript));
+    },
+  });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -498,9 +509,36 @@ function ChatPage() {
               <PromptInputTextarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Describe what you're planning…"
+                placeholder={voice.status === "listening" ? "Listening… speak now" : "Describe what you're planning…"}
               />
-              <div className="flex items-center justify-end p-2">
+              <div className="flex items-center justify-between p-2">
+                {/* Voice input button */}
+                <div className="flex items-center gap-2">
+                  {voice.supported && (
+                    <button
+                      type="button"
+                      onClick={voice.toggle}
+                      title={voice.status === "listening" ? "Stop listening" : "Voice input"}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-all ${
+                        voice.status === "listening"
+                          ? "bg-destructive/10 text-destructive animate-pulse"
+                          : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                      }`}
+                    >
+                      {voice.status === "listening" ? (
+                        <MicOff className="h-4 w-4" />
+                      ) : (
+                        <Mic className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
+                  {voice.status === "listening" && (
+                    <span className="text-xs text-destructive animate-pulse">Listening…</span>
+                  )}
+                  {voice.errorMessage && (
+                    <span className="text-xs text-destructive">{voice.errorMessage}</span>
+                  )}
+                </div>
                 <PromptInputSubmit status={phase === "thinking" ? "submitted" : undefined} />
               </div>
             </PromptInput>
