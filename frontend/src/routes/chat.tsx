@@ -242,6 +242,7 @@ function ChatPage() {
   const [budgetInput, setBudgetInput] = useState<string>("");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [removedKeys, setRemovedKeys] = useState<Set<string>>(new Set());
+  const [intentGroups, setIntentGroups] = useState<any[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -342,6 +343,7 @@ function ChatPage() {
       };
 
       setCartData(normalized);
+      setIntentGroups(data.intents ?? []);
 
       // Save to localStorage history.
       const entry: CartHistoryEntry = {
@@ -389,6 +391,8 @@ function ChatPage() {
       summary: entry.summary,
     };
     setCartData(normalized);
+    // History stores flattened cart — no intent groups available
+    setIntentGroups([]);
     if (entry.budget_inr) setBudgetInput(String(entry.budget_inr));
     setMessages((m) => [
       ...m,
@@ -630,29 +634,95 @@ function ChatPage() {
                   </div>
                 </div>
 
-                {/* Items list */}
+                {/* Items list — grouped by intent if multiple, flat if single/restored */}
                 <div className="flex-1 overflow-y-auto p-4">
-                  <div className="space-y-2.5">
-                    {cartData.cart?.filter((_: any, idx: number) => {
-                      const key = String(_.sku ?? idx);
-                      return !removedKeys.has(key);
-                    }).map((item: any, idx: number) => {
-                      const key = String(item.sku ?? idx);
-                      const qty = quantities[key] ?? item.quantity_units;
-                      return (
-                        <CartItemRow
-                          key={key}
-                          item={item}
-                          qty={qty}
-                          onDecrement={() => adjustQty(key, -1)}
-                          onIncrement={() => adjustQty(key, 1)}
-                          onRemove={() => setRemovedKeys((prev) => new Set([...prev, key]))}
-                        />
-                      );
-                    })}
-                  </div>
+                  {intentGroups.length > 1 ? (
+                    /* Multi-intent: render each group as a labelled section */
+                    <div className="space-y-5">
+                      {intentGroups.map((group: any, gi: number) => {
+                        const groupItems = (group.cart ?? []).filter((_: any, idx: number) => {
+                          const key = String(_.sku ?? `${gi}-${idx}`);
+                          return !removedKeys.has(key);
+                        });
+                        const groupSubtotal = groupItems.reduce((s: number, it: any, idx: number) => {
+                          const key = String(it.sku ?? `${gi}-${idx}`);
+                          const qty = quantities[key] ?? it.quantity_units;
+                          return s + it.price_per_unit_inr * qty;
+                        }, 0);
 
-                  {cartData.unavailable_items?.length > 0 && (
+                        return (
+                          <div key={gi}>
+                            {/* Section header */}
+                            <div className="mb-2 flex items-center justify-between">
+                              <span className="text-xs font-semibold uppercase tracking-wider text-brand">
+                                {group.intent_type}
+                              </span>
+                              <span className="text-xs text-muted-foreground">₹{groupSubtotal.toFixed(0)}</span>
+                            </div>
+                            {group.context_summary && (
+                              <p className="mb-2 text-xs text-muted-foreground">{group.context_summary}</p>
+                            )}
+                            <div className="space-y-2">
+                              {(group.cart ?? []).filter((_: any, idx: number) => !removedKeys.has(String(_.sku ?? `${gi}-${idx}`))).map((item: any, idx: number) => {
+                                const key = String(item.sku ?? `${gi}-${idx}`);
+                                const qty = quantities[key] ?? item.quantity_units;
+                                return (
+                                  <CartItemRow
+                                    key={key}
+                                    item={item}
+                                    qty={qty}
+                                    onDecrement={() => adjustQty(key, -1)}
+                                    onIncrement={() => adjustQty(key, 1)}
+                                    onRemove={() => setRemovedKeys((prev) => new Set([...prev, key]))}
+                                  />
+                                );
+                              })}
+                            </div>
+                            {/* Per-group unavailable */}
+                            {group.unavailable_items?.length > 0 && (
+                              <div className="mt-2 space-y-1">
+                                {group.unavailable_items.map((it: any, idx: number) => (
+                                  <div key={idx} className="flex items-center gap-2 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-xs">
+                                    <AlertTriangle className="h-3 w-3 shrink-0 text-destructive" />
+                                    <span className="font-medium">{it.name}</span>
+                                    <span className="text-muted-foreground">— {it.reason?.replace(/_/g, " ")}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {/* Divider between groups */}
+                            {gi < intentGroups.length - 1 && (
+                              <div className="mt-4 border-t border-border/50" />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    /* Single intent (or restored from history): flat list */
+                    <div className="space-y-2.5">
+                      {cartData.cart?.filter((_: any, idx: number) => {
+                        const key = String(_.sku ?? idx);
+                        return !removedKeys.has(key);
+                      }).map((item: any, idx: number) => {
+                        const key = String(item.sku ?? idx);
+                        const qty = quantities[key] ?? item.quantity_units;
+                        return (
+                          <CartItemRow
+                            key={key}
+                            item={item}
+                            qty={qty}
+                            onDecrement={() => adjustQty(key, -1)}
+                            onIncrement={() => adjustQty(key, 1)}
+                            onRemove={() => setRemovedKeys((prev) => new Set([...prev, key]))}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Unavailable items (for flat/single-intent mode) */}
+                  {intentGroups.length <= 1 && cartData.unavailable_items?.length > 0 && (
                     <div className="mt-5">
                       <div className="mb-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                         Unavailable
