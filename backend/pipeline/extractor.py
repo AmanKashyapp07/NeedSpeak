@@ -270,6 +270,28 @@ def _get_mock_extraction(text: str) -> ExtractionResult:
                 ExtractedItem(name="tomato ketchup", quantity=1, unit="pack", category="spices"),
             ],
         )
+    elif any(w in text_lower for w in ["tikka", "butter chicken", "मक्खन चिकन", "टिक्का"]):
+        return ExtractionResult(
+            intent_type=IntentType.RECIPE,
+            context_summary="Chicken Tikka Masala recipe for 4 people",
+            servings=4,
+            items=[
+                ExtractedItem(name="chicken", quantity=800, unit="g", category="general"),
+                ExtractedItem(name="onion", quantity=2, unit="piece", category="vegetables"),
+                ExtractedItem(name="tomato", quantity=3, unit="piece", category="vegetables"),
+                ExtractedItem(name="butter", quantity=100, unit="g", category="dairy"),
+                ExtractedItem(name="fresh cream", quantity=100, unit="ml", category="dairy"),
+                ExtractedItem(name="curd", quantity=1, unit="cup", category="dairy"),
+                ExtractedItem(name="ginger", quantity=1, unit="inch", category="vegetables"),
+                ExtractedItem(name="garlic", quantity=6, unit="clove", category="vegetables"),
+                ExtractedItem(name="red chili powder", quantity=2, unit="tsp", category="spices"),
+                ExtractedItem(name="turmeric powder", quantity=1, unit="tsp", category="spices"),
+                ExtractedItem(name="garam masala", quantity=1.5, unit="tsp", category="spices"),
+                ExtractedItem(name="salt", quantity=1, unit="tsp", category="spices"),
+                ExtractedItem(name="cooking oil", quantity=2, unit="tbsp", category="oils"),
+                ExtractedItem(name="coriander leaves bunch", quantity=1, unit="piece", category="vegetables"),
+            ],
+        )
     elif any(w in text_lower for w in ["biryani", "chicken", "curry", "चिकन", "बिरयानी"]):
         return ExtractionResult(
             intent_type=IntentType.RECIPE,
