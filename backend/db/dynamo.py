@@ -269,6 +269,13 @@ def _get_mock_products() -> list[dict]:
             "tags": ["burger", "snacks"],
         },
         {
+            "sku": "MOCK-BUN-002", "name": "harvest gold white bread", "category": "grains",
+            "subcategory": "bread", "brand": "Harvest Gold", "price_inr": 35,
+            "unit": "pack", "unit_quantity": 1, "rating": 4.6, "in_stock": True,
+            "keywords": ["bread", "white bread", "sandwich bread", "slice"],
+            "tags": ["sandwich", "breakfast"],
+        },
+        {
             "sku": "MOCK-SNK-005", "name": "mccain aloo tikki", "category": "snacks",
             "subcategory": "frozen", "brand": "McCain", "price_inr": 125,
             "unit": "pack", "unit_quantity": 1, "rating": 4.7, "in_stock": True,

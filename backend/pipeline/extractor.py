@@ -270,6 +270,22 @@ def _get_mock_extraction(text: str) -> ExtractionResult:
                 ExtractedItem(name="tomato ketchup", quantity=1, unit="pack", category="spices"),
             ],
         )
+    elif any(w in text_lower for w in ["sandwich", "sándwich", "सैंडविच", "सेंडविच"]):
+        return ExtractionResult(
+            intent_type=IntentType.RECIPE,
+            context_summary="Veg Club Sandwich recipe",
+            servings=4,
+            items=[
+                ExtractedItem(name="white bread", quantity=1, unit="pack", category="grains"),
+                ExtractedItem(name="mayonnaise", quantity=1, unit="pack", category="dairy"),
+                ExtractedItem(name="tomato ketchup", quantity=1, unit="pack", category="spices"),
+                ExtractedItem(name="cheese slices", quantity=1, unit="pack", category="dairy"),
+                ExtractedItem(name="onion", quantity=2, unit="piece", category="vegetables"),
+                ExtractedItem(name="tomato", quantity=2, unit="piece", category="vegetables"),
+                ExtractedItem(name="green chili", quantity=2, unit="piece", category="vegetables"),
+                ExtractedItem(name="butter", quantity=100, unit="g", category="dairy"),
+            ],
+        )
     elif any(w in text_lower for w in ["tikka", "butter chicken", "मक्खन चिकन", "टिक्का"]):
         return ExtractionResult(
             intent_type=IntentType.RECIPE,
