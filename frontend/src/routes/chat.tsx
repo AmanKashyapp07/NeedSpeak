@@ -16,8 +16,7 @@ import {
   AlertTriangle,
   X,
   History,
-  ChevronDown,
-  ChevronUp,
+  ShoppingCart,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import {
@@ -508,113 +507,130 @@ function ChatPage() {
           </div>
         </div>
 
-        {/* Right: live cart pane */}
-        <aside className="hidden min-h-0 flex-col bg-surface lg:flex">
-          {cartData ? (
-            <>
-              <div className="border-b border-border px-5 py-3">
-                <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Live cart
+        {/* Right: live cart pane — Premium floating card */}
+        <aside className="hidden min-h-0 flex-col p-4 lg:flex">
+          <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-border/60 bg-background shadow-lg shadow-black/5 dark:shadow-black/20">
+            {cartData ? (
+              <>
+                {/* Header */}
+                <div className="border-b border-border/60 bg-gradient-to-b from-surface/80 to-surface/40 px-5 py-4">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10">
+                      <ShoppingCart className="h-4 w-4 text-brand" />
+                    </div>
+                    <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      Live Cart
+                    </div>
+                  </div>
+                  <div className="mt-3 font-display text-xl font-semibold tracking-tight">{cartData.intent_type}</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{cartData.context_summary}</div>
+                  <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-1">
+                      <Wallet className="h-3.5 w-3.5 text-brand" /> ₹{computedTotal.toFixed(0)}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-1">
+                      <Users className="h-3.5 w-3.5" /> {cartData.cart?.length ?? 0} items
+                    </span>
+                    {budgetInput && Number(budgetInput) > 0 && (
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium ${
+                          computedTotal > Number(budgetInput)
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-success/10 text-success"
+                        }`}
+                      >
+                        {computedTotal > Number(budgetInput)
+                          ? `₹${(computedTotal - Number(budgetInput)).toFixed(0)} over`
+                          : `₹${(Number(budgetInput) - computedTotal).toFixed(0)} under`}
+                      </span>
+                    )}
+                    {cartData.budget_exceeded && !budgetInput && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-2.5 py-1 text-destructive">
+                        <AlertTriangle className="h-3.5 w-3.5" /> Over budget
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="mt-1 font-display text-lg font-semibold tracking-tight">{cartData.intent_type}</div>
-                <div className="mt-1 text-xs text-muted-foreground">{cartData.context_summary}</div>
-                <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    <Wallet className="h-3.5 w-3.5" /> ₹{computedTotal.toFixed(0)}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5" /> {cartData.cart?.length ?? 0} items
-                  </span>
+
+                {/* Items list */}
+                <div className="flex-1 overflow-y-auto p-4">
+                  <div className="space-y-2.5">
+                    {cartData.cart?.map((item: any, idx: number) => {
+                      const key = item.sku ?? idx;
+                      const qty = quantities[key] ?? item.quantity_units;
+                      return (
+                        <CartItemRow
+                          key={key}
+                          item={item}
+                          qty={qty}
+                          onDecrement={() => adjustQty(key, -1)}
+                          onIncrement={() => adjustQty(key, 1)}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  {cartData.unavailable_items?.length > 0 && (
+                    <div className="mt-5">
+                      <div className="mb-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        Unavailable
+                      </div>
+                      <div className="space-y-2">
+                        {cartData.unavailable_items.map((it: any, idx: number) => (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-2 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-xs"
+                          >
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />
+                            <span className="font-medium">{it.name}</span>
+                            <span className="text-muted-foreground">
+                              — {it.reason?.replace(/_/g, " ")}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer with total */}
+                <div className="border-t border-border/60 bg-gradient-to-t from-surface/80 to-surface/40 p-5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Total</span>
+                    <span className="font-display text-3xl font-semibold tracking-tight">₹{computedTotal.toFixed(0)}</span>
+                  </div>
                   {budgetInput && Number(budgetInput) > 0 && (
-                    <span
-                      className={`inline-flex items-center gap-1 font-medium ${
-                        computedTotal > Number(budgetInput) ? "text-destructive" : "text-success"
-                      }`}
-                    >
-                      {computedTotal > Number(budgetInput)
-                        ? `₹${(computedTotal - Number(budgetInput)).toFixed(0)} over`
-                        : `₹${(Number(budgetInput) - computedTotal).toFixed(0)} under`}
-                    </span>
-                  )}
-                  {cartData.budget_exceeded && !budgetInput && (
-                    <span className="inline-flex items-center gap-1 text-destructive">
-                      <AlertTriangle className="h-3.5 w-3.5" /> Over budget
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4">
-                <div className="space-y-2">
-                  {cartData.cart?.map((item: any, idx: number) => {
-                    const key = item.sku ?? idx;
-                    const qty = quantities[key] ?? item.quantity_units;
-                    return (
-                      <CartItemRow
-                        key={key}
-                        item={item}
-                        qty={qty}
-                        onDecrement={() => adjustQty(key, -1)}
-                        onIncrement={() => adjustQty(key, 1)}
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface">
+                      <div
+                        className={`h-full transition-all ${
+                          computedTotal > Number(budgetInput) ? "bg-destructive" : "bg-brand"
+                        }`}
+                        style={{ width: `${Math.min(100, (computedTotal / Number(budgetInput)) * 100)}%` }}
                       />
-                    );
-                  })}
-                </div>
-
-                {cartData.unavailable_items?.length > 0 && (
-                  <div className="mt-4">
-                    <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Unavailable
                     </div>
-                    <div className="space-y-1.5">
-                      {cartData.unavailable_items.map((it: any, idx: number) => (
-                        <div
-                          key={idx}
-                          className="flex items-center gap-2 rounded-lg border border-border/50 bg-destructive/5 px-3 py-2 text-xs"
-                        >
-                          <AlertTriangle className="h-3 w-3 shrink-0 text-destructive" />
-                          <span className="font-medium">{it.name}</span>
-                          <span className="text-muted-foreground">
-                            — {it.reason?.replace(/_/g, " ")}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="border-t border-border bg-background p-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Total</span>
-                  <span className="font-display text-2xl font-semibold tracking-tight">₹{computedTotal.toFixed(0)}</span>
+                  )}
+                  <Link
+                    to="/cart/$id"
+                    params={{ id: cartData.session_id }}
+                    className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-foreground text-sm font-medium text-background shadow-md transition-all hover:bg-foreground/90 hover:shadow-lg"
+                  >
+                    Review cart
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </div>
-                {budgetInput && Number(budgetInput) > 0 && (
-                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface">
-                    <div
-                      className={`h-full transition-all ${
-                        computedTotal > Number(budgetInput) ? "bg-destructive" : "bg-brand"
-                      }`}
-                      style={{ width: `${Math.min(100, (computedTotal / Number(budgetInput)) * 100)}%` }}
-                    />
-                  </div>
-                )}
-                <Link
-                  to="/cart/$id"
-                  params={{ id: cartData.session_id }}
-                  className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-foreground text-sm font-medium text-background hover:bg-foreground/90"
-                >
-                  Review cart
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+              </>
+            ) : (
+              <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-surface">
+                  <ShoppingCart className="h-8 w-8 text-muted-foreground/30" />
+                </div>
+                <div className="space-y-1">
+                  <p className="font-display text-base font-medium">Your cart is empty</p>
+                  <p className="text-sm text-muted-foreground">Describe what you need and I'll build your cart</p>
+                </div>
               </div>
-            </>
-          ) : (
-            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-4 text-sm text-muted-foreground">
-              <Sparkles className="h-8 w-8 opacity-20" />
-              Your cart will appear here
-            </div>
-          )}
+            )}
+          </div>
         </aside>
       </div>
     </AppShell>
