@@ -6,11 +6,13 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  redirect,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { getStoredAuth } from "./login";
 
 function NotFoundComponent() {
   return (
@@ -110,6 +112,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
+  beforeLoad: ({ location }) => {
+    if (!getStoredAuth() && location.pathname !== '/login') {
+      throw redirect({
+        to: '/login',
+      });
+    }
+  },
 });
 
 function RootShell({ children }: { children: ReactNode }) {

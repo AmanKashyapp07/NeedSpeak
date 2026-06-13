@@ -16,6 +16,8 @@ from pydantic import BaseModel, Field
 class InputType(str, Enum):
     TEXT = "text"
     URL = "url"
+    WHATSAPP = "whatsapp"
+    IMAGE = "image"
 
 
 class IntentType(str, Enum):

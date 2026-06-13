@@ -464,7 +464,7 @@ function ChatPage() {
           <div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6">
             <div className="flex items-center gap-3">
               <Sparkles className="h-6 w-6 text-brand" />
-              <span className="font-display text-4xl font-bold tracking-tight uppercase">CONTEXT-TO-CART</span>
+              <span className="font-display text-lg font-bold tracking-tight uppercase">CONTEXT-TO-CART</span>
               <span className="text-sm text-muted-foreground mt-2">· Describe it, paste it, drop it</span>
             </div>
             <button
