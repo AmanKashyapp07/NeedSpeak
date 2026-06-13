@@ -1,4 +1,3 @@
-
 # NeedSpeak — Fresh UI Rebuild (Clean Light Commerce)
 
 Scope: UI only. No backend, no real intent parsing — every feature is wired with realistic mock data so the screens demo end-to-end. You can plug in your existing logic from the GitHub repo afterwards.

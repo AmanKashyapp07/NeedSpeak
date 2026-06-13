@@ -1,6 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { ArrowRight, Check, FileText, Image as ImageIcon, Link as LinkIcon, Paperclip, Sparkles, Users, Wallet, AlertTriangle, X } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  FileText,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Paperclip,
+  Sparkles,
+  Users,
+  Wallet,
+  AlertTriangle,
+  X,
+} from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import {
   Conversation,
@@ -20,9 +32,16 @@ export const Route = createFileRoute("/chat")({
   head: () => ({
     meta: [
       { title: "Chat — NeedSpeak" },
-      { name: "description", content: "Describe what you're planning. NeedSpeak extracts intent and builds a cart in real time." },
+      {
+        name: "description",
+        content:
+          "Describe what you're planning. NeedSpeak extracts intent and builds a cart in real time.",
+      },
       { property: "og:title", content: "Chat — NeedSpeak" },
-      { property: "og:description", content: "Context-to-Cart workspace with live intent extraction." },
+      {
+        property: "og:description",
+        content: "Context-to-Cart workspace with live intent extraction.",
+      },
     ],
   }),
   component: ChatPage,
@@ -53,7 +72,10 @@ function ChatPage() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [text, setText] = useState(samplePrompts[0]);
   const [messages, setMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([
-    { role: "assistant", text: "Describe your occasion or paste a recipe, and I'll build a cart for you." },
+    {
+      role: "assistant",
+      text: "Describe your occasion or paste a recipe, and I'll build a cart for you.",
+    },
   ]);
   const [cartData, setCartData] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -66,7 +88,7 @@ function ChatPage() {
 
   const onSubmit = async () => {
     if (!text.trim() || phase === "thinking") return;
-    
+
     const inputText = text.trim();
     setMessages((m) => [...m, { role: "user", text: inputText }]);
     setPhase("thinking");
@@ -95,7 +117,9 @@ function ChatPage() {
         try {
           const errData = await res.json();
           errDetail = errData.message || errData.detail || errDetail;
-        } catch {}
+        } catch {
+          // fallback to default errDetail if JSON parsing fails
+        }
         throw new Error(errDetail);
       }
 
@@ -108,8 +132,14 @@ function ChatPage() {
       const intents: any[] = data.intents ?? [];
       const allCartItems = intents.flatMap((g: any) => g.cart ?? []);
       const allUnavailable = intents.flatMap((g: any) => g.unavailable_items ?? []);
-      const intentType = intents.map((g: any) => g.intent_type).filter(Boolean).join(", ");
-      const contextSummary = intents.map((g: any) => g.context_summary).filter(Boolean).join(" · ");
+      const intentType = intents
+        .map((g: any) => g.intent_type)
+        .filter(Boolean)
+        .join(", ");
+      const contextSummary = intents
+        .map((g: any) => g.context_summary)
+        .filter(Boolean)
+        .join(" · ");
 
       // Low-confidence inputs come back with a clarification question and no cart.
       if (data.confidence === "low" && data.clarification_question) {
@@ -130,7 +160,9 @@ function ChatPage() {
       // Build a rich summary message
       const itemCount = allCartItems.length;
       const unavailCount = allUnavailable.length;
-      let summaryText = data.summary || `I found ${itemCount} items for your ${intentType || "shopping"} list, totaling Rs.${data.total_price_inr}.`;
+      let summaryText =
+        data.summary ||
+        `I found ${itemCount} items for your ${intentType || "shopping"} list, totaling Rs.${data.total_price_inr}.`;
       if (unavailCount > 0) {
         summaryText += ` (${unavailCount} item${unavailCount > 1 ? "s" : ""} unavailable)`;
       }
@@ -184,9 +216,15 @@ function ChatPage() {
                 <Message from="assistant">
                   <MessageContent>
                     <div className="space-y-3">
-                      <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Intent extracted</div>
+                      <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        Intent extracted
+                      </div>
                       <pre className="overflow-x-auto rounded-lg bg-surface p-3 text-xs leading-relaxed text-foreground">
-{JSON.stringify({ intent: cartData.intent_type, summary: cartData.context_summary }, null, 2)}
+                        {JSON.stringify(
+                          { intent: cartData.intent_type, summary: cartData.context_summary },
+                          null,
+                          2,
+                        )}
                       </pre>
                     </div>
                   </MessageContent>
@@ -202,7 +240,9 @@ function ChatPage() {
             <div className="flex items-center gap-2 border-t border-destructive/30 bg-destructive/10 px-4 py-2 text-xs text-destructive">
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
               <span className="flex-1">{errorMsg}</span>
-              <button onClick={() => setErrorMsg(null)}><X className="h-3.5 w-3.5" /></button>
+              <button onClick={() => setErrorMsg(null)}>
+                <X className="h-3.5 w-3.5" />
+              </button>
             </div>
           )}
 
@@ -214,7 +254,10 @@ function ChatPage() {
                 { i: FileText, l: "PDF" },
                 { i: Paperclip, l: "WhatsApp" },
               ].map((c) => (
-                <button key={c.l} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-muted-foreground hover:border-foreground hover:text-foreground">
+                <button
+                  key={c.l}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-muted-foreground hover:border-foreground hover:text-foreground"
+                >
                   <c.i className="h-3.5 w-3.5" />
                   {c.l}
                 </button>
@@ -238,12 +281,18 @@ function ChatPage() {
           {cartData ? (
             <>
               <div className="border-b border-border px-5 py-3">
-                <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Live cart</div>
+                <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Live cart
+                </div>
                 <div className="mt-1 text-base font-semibold">{cartData.intent_type}</div>
                 <div className="mt-1 text-xs text-muted-foreground">{cartData.context_summary}</div>
                 <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1"><Wallet className="h-3.5 w-3.5" /> ₹{cartData.total_price_inr}</span>
-                  <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {cartData.cart?.length ?? 0} items</span>
+                  <span className="inline-flex items-center gap-1">
+                    <Wallet className="h-3.5 w-3.5" /> ₹{cartData.total_price_inr}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Users className="h-3.5 w-3.5" /> {cartData.cart?.length ?? 0} items
+                  </span>
                   {cartData.budget_exceeded && (
                     <span className="inline-flex items-center gap-1 text-destructive">
                       <AlertTriangle className="h-3.5 w-3.5" /> Over budget
@@ -255,23 +304,31 @@ function ChatPage() {
               <div className="flex-1 overflow-y-auto p-4">
                 <div className="space-y-2">
                   {cartData.cart?.map((it: any, idx: number) => (
-                    <div key={it.sku || idx} className="rounded-xl border border-border bg-background p-3">
+                    <div
+                      key={it.sku || idx}
+                      className="rounded-xl border border-border bg-background p-3"
+                    >
                       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
                         <div className="min-w-0">
                           <div className="truncate text-sm font-medium">{it.name}</div>
                           <div className="mt-0.5 text-xs text-muted-foreground">
-                            {it.brand} · {it.quantity_units} × {it.unit_quantity}{it.unit}
+                            {it.brand} · {it.quantity_units} × {it.unit_quantity}
+                            {it.unit}
                           </div>
                           <div className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[10px] text-muted-foreground">
                             <Check className="h-3 w-3 text-brand" />
                             {it.substituted
-                              ? (it.substitution_reason || "Substituted")
-                              : (it.matched_from?.length > 0 ? it.matched_from.join(", ") : "Matched")}
+                              ? it.substitution_reason || "Substituted"
+                              : it.matched_from?.length > 0
+                                ? it.matched_from.join(", ")
+                                : "Matched"}
                           </div>
                         </div>
                         <div className="shrink-0 text-right">
                           <div className="text-sm font-semibold">₹{it.total_price_inr}</div>
-                          <div className="text-[10px] text-muted-foreground">₹{it.price_per_unit_inr}/unit</div>
+                          <div className="text-[10px] text-muted-foreground">
+                            ₹{it.price_per_unit_inr}/unit
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -281,13 +338,20 @@ function ChatPage() {
                 {/* Unavailable items */}
                 {cartData.unavailable_items?.length > 0 && (
                   <div className="mt-4">
-                    <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Unavailable</div>
+                    <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      Unavailable
+                    </div>
                     <div className="space-y-1.5">
                       {cartData.unavailable_items.map((it: any, idx: number) => (
-                        <div key={idx} className="flex items-center gap-2 rounded-lg border border-border/50 bg-destructive/5 px-3 py-2 text-xs">
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 rounded-lg border border-border/50 bg-destructive/5 px-3 py-2 text-xs"
+                        >
                           <AlertTriangle className="h-3 w-3 shrink-0 text-destructive" />
                           <span className="font-medium">{it.name}</span>
-                          <span className="text-muted-foreground">— {it.reason?.replace(/_/g, " ")}</span>
+                          <span className="text-muted-foreground">
+                            — {it.reason?.replace(/_/g, " ")}
+                          </span>
                         </div>
                       ))}
                     </div>

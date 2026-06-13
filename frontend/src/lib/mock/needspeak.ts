@@ -26,12 +26,48 @@ export const samplePrompts = [
 ];
 
 export const occasions = [
-  { id: "ipl", name: "IPL Watch Party", emoji: "🏏", desc: "Snacks, drinks & sides for match nights", items: 12 },
-  { id: "birthday", name: "Birthday Party", emoji: "🎂", desc: "Cake, decor, party essentials", items: 18 },
-  { id: "weekly", name: "Weekly Grocery", emoji: "🛒", desc: "Staples, fresh produce, household", items: 32 },
-  { id: "hostel", name: "Hostel Restock", emoji: "🎓", desc: "Instant meals, toiletries, basics", items: 22 },
-  { id: "travel", name: "Travel Essentials", emoji: "🧳", desc: "Toiletries, snacks, electronics", items: 14 },
-  { id: "festival", name: "Festival Hosting", emoji: "🪔", desc: "Sweets, decor, gifts, puja items", items: 26 },
+  {
+    id: "ipl",
+    name: "IPL Watch Party",
+    emoji: "🏏",
+    desc: "Snacks, drinks & sides for match nights",
+    items: 12,
+  },
+  {
+    id: "birthday",
+    name: "Birthday Party",
+    emoji: "🎂",
+    desc: "Cake, decor, party essentials",
+    items: 18,
+  },
+  {
+    id: "weekly",
+    name: "Weekly Grocery",
+    emoji: "🛒",
+    desc: "Staples, fresh produce, household",
+    items: 32,
+  },
+  {
+    id: "hostel",
+    name: "Hostel Restock",
+    emoji: "🎓",
+    desc: "Instant meals, toiletries, basics",
+    items: 22,
+  },
+  {
+    id: "travel",
+    name: "Travel Essentials",
+    emoji: "🧳",
+    desc: "Toiletries, snacks, electronics",
+    items: 14,
+  },
+  {
+    id: "festival",
+    name: "Festival Hosting",
+    emoji: "🪔",
+    desc: "Sweets, decor, gifts, puja items",
+    items: 26,
+  },
 ];
 
 export const iplCart: Cart = {
@@ -103,18 +139,39 @@ export const iplCart: Cart = {
 };
 
 export const featureBento = [
-  { title: "Context-to-Cart", desc: "Text, recipes, images, WhatsApp, PDFs — turn any context into a cart." },
-  { title: "Intent Extraction", desc: "Structured understanding of occasion, people, budget, dietary." },
-  { title: "OccasionCart", desc: "Pre-built templates for IPL, birthdays, festivals, weekly groceries." },
+  {
+    title: "Context-to-Cart",
+    desc: "Text, recipes, images, WhatsApp, PDFs — turn any context into a cart.",
+  },
+  {
+    title: "Intent Extraction",
+    desc: "Structured understanding of occasion, people, budget, dietary.",
+  },
+  {
+    title: "OccasionCart",
+    desc: "Pre-built templates for IPL, birthdays, festivals, weekly groceries.",
+  },
   { title: "RecipeCart", desc: "Paste a recipe URL — get ingredients with smart quantities." },
   { title: "Quantity Engine", desc: "Quantities tuned to attendees, family size, trip length." },
-  { title: "Multi-Intent", desc: "Handle multiple goals in one prompt — separate carts auto-created." },
-  { title: "GoalCart", desc: "Budget optimization with savings suggestions you stay in control of." },
+  {
+    title: "Multi-Intent",
+    desc: "Handle multiple goals in one prompt — separate carts auto-created.",
+  },
+  {
+    title: "GoalCart",
+    desc: "Budget optimization with savings suggestions you stay in control of.",
+  },
   { title: "CompareCart", desc: "What if budget drops? What if attendees grow? Instant diff." },
-  { title: "Smart Alternatives", desc: "Cheaper or better options surfaced per item — you choose." },
+  {
+    title: "Smart Alternatives",
+    desc: "Cheaper or better options surfaced per item — you choose.",
+  },
   { title: "Explainable", desc: "Every item shows exactly why it was added." },
   { title: "Confidence Layer", desc: "Asks before assuming when the prompt is ambiguous." },
   { title: "ReviewCart", desc: "Review assumptions, quantities, alternatives before checkout." },
-  { title: "Collaborative Cart", desc: "Share via link or QR. Friends add. Budget auto-rebalances." },
+  {
+    title: "Collaborative Cart",
+    desc: "Share via link or QR. Friends add. Budget auto-rebalances.",
+  },
   { title: "Preferences", desc: "Veg, vegan, Jain, value / balanced / premium — set once." },
 ];

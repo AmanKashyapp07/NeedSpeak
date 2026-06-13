@@ -7,7 +7,11 @@ export const Route = createFileRoute("/recipe")({
   head: () => ({
     meta: [
       { title: "RecipeCart — NeedSpeak" },
-      { name: "description", content: "Paste a recipe URL and get an ingredient cart with quantities scaled to your servings." },
+      {
+        name: "description",
+        content:
+          "Paste a recipe URL and get an ingredient cart with quantities scaled to your servings.",
+      },
       { property: "og:title", content: "RecipeCart" },
       { property: "og:description", content: "Recipe URL in. Cart out." },
     ],
@@ -38,7 +42,9 @@ function RecipePage() {
     <AppShell>
       <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
         <h1 className="text-4xl font-semibold tracking-tight">RecipeCart</h1>
-        <p className="mt-2 text-muted-foreground">Paste any recipe URL — get a cart with the right quantities.</p>
+        <p className="mt-2 text-muted-foreground">
+          Paste any recipe URL — get a cart with the right quantities.
+        </p>
 
         <div className="mt-8 rounded-2xl border border-border bg-card p-4 shadow-soft">
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -66,10 +72,16 @@ function RecipePage() {
                 <div
                   key={s.title}
                   className={`flex items-start gap-3 rounded-xl border p-4 ${
-                    current ? "border-foreground bg-surface" : done ? "border-border bg-background" : "border-dashed border-border bg-background"
+                    current
+                      ? "border-foreground bg-surface"
+                      : done
+                        ? "border-border bg-background"
+                        : "border-dashed border-border bg-background"
                   }`}
                 >
-                  <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${done ? "bg-brand text-brand-foreground" : current ? "bg-foreground text-background" : "bg-surface text-muted-foreground"}`}>
+                  <div
+                    className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${done ? "bg-brand text-brand-foreground" : current ? "bg-foreground text-background" : "bg-surface text-muted-foreground"}`}
+                  >
                     {done ? <Check className="h-4 w-4" /> : <s.icon className="h-4 w-4" />}
                   </div>
                   <div className="min-w-0">
@@ -91,12 +103,17 @@ function RecipePage() {
             </div>
             <div className="text-right">
               <div className="text-sm text-muted-foreground">Estimated</div>
-              <div className="text-lg font-semibold">₹{sampleIngredients.reduce((s, i) => s + i.price, 0)}</div>
+              <div className="text-lg font-semibold">
+                ₹{sampleIngredients.reduce((s, i) => s + i.price, 0)}
+              </div>
             </div>
           </div>
           <ul className="divide-y divide-border">
             {sampleIngredients.map((it) => (
-              <li key={it.name} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-3">
+              <li
+                key={it.name}
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-3"
+              >
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium">{it.name}</div>
                   <div className="text-xs text-muted-foreground">{it.qty}</div>

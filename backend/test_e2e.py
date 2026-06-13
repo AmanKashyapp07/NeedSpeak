@@ -34,14 +34,18 @@ r = requests.post(url, json=payload, headers=headers, timeout=35)
 data = r.json()
 print(f"Status: {r.status_code}")
 if r.status_code == 200:
-    print(f"Intent: {data.get('intent_type')}")
-    print(f"Cart items: {len(data.get('cart', []))}")
-    print(f"Unavailable: {len(data.get('unavailable_items', []))}")
+    intents = data.get("intents", [])
+    cart_items = [item for g in intents for item in g.get("cart", [])]
+    unavailable_items = [item for g in intents for item in g.get("unavailable_items", [])]
+    intent_types = ", ".join(filter(None, [g.get("intent_type") for g in intents]))
+    print(f"Intents: {intent_types}")
+    print(f"Cart items: {len(cart_items)}")
+    print(f"Unavailable: {len(unavailable_items)}")
     print(f"Total: Rs.{data.get('total_price_inr', 0)}")
     print(f"Summary: {data.get('summary', '')[:120]}...")
-    for item in data.get("cart", []):
+    for item in cart_items:
         print(f"  - {item['name']} x{item['quantity_units']} @ Rs.{item['price_per_unit_inr']}  (matched: {item.get('matched_from', [])})")
-    for item in data.get("unavailable_items", []):
+    for item in unavailable_items:
         print(f"  [!] {item['name']} — {item['reason']}")
 else:
     print(f"ERROR: {json.dumps(data, indent=2)}")
@@ -59,11 +63,12 @@ r2 = requests.post(url, json=payload2, headers=headers, timeout=35)
 data2 = r2.json()
 print(f"Status: {r2.status_code}")
 if r2.status_code == 200:
-    print(f"Intent: {data2.get('intent_type')}")
-    print(f"Cart items: {len(data2.get('cart', []))}")
+    intents = data2.get("intents", [])
+    cart_items = [item for g in intents for item in g.get("cart", [])]
+    print(f"Cart items: {len(cart_items)}")
     print(f"Total: Rs.{data2.get('total_price_inr', 0)}")
     print(f"Budget exceeded: {data2.get('budget_exceeded')}")
-    for item in data2.get("cart", []):
+    for item in cart_items:
         sub = " [SUBSTITUTED]" if item.get("substituted") else ""
         print(f"  - {item['name']} x{item['quantity_units']} @ Rs.{item['price_per_unit_inr']}{sub}")
 else:
@@ -85,9 +90,10 @@ r3 = requests.post(url, json=payload3, headers=headers, timeout=35)
 data3 = r3.json()
 print(f"Status: {r3.status_code}")
 if r3.status_code == 200:
-    print(f"Intent: {data3.get('intent_type')}")
-    print(f"Cart items: {len(data3.get('cart', []))}")
-    for item in data3.get("cart", []):
+    intents = data3.get("intents", [])
+    cart_items = [item for g in intents for item in g.get("cart", [])]
+    print(f"Cart items: {len(cart_items)}")
+    for item in cart_items:
         print(f"  - {item['name']} x{item['quantity_units']}")
 else:
     print(f"ERROR: {json.dumps(data3, indent=2)}")

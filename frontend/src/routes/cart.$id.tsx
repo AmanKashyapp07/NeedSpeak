@@ -1,13 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeftRight, Check, ChevronDown, Info, Sparkles, TrendingDown, Wallet, Loader2 } from "lucide-react";
+import {
+  ArrowLeftRight,
+  Check,
+  ChevronDown,
+  Info,
+  Sparkles,
+  TrendingDown,
+  Wallet,
+  Loader2,
+} from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 
 export const Route = createFileRoute("/cart/$id")({
   head: () => ({
     meta: [
       { title: "Review cart — NeedSpeak" },
-      { name: "description", content: "Review every item with reasoning, alternatives, and budget control before checkout." },
+      {
+        name: "description",
+        content:
+          "Review every item with reasoning, alternatives, and budget control before checkout.",
+      },
       { property: "og:title", content: "ReviewCart — NeedSpeak" },
       { property: "og:description", content: "Explainable shopping with budget control." },
     ],
@@ -46,16 +59,26 @@ function CartPage() {
   // Session stores the resolved cart under `resolved_intents` (multi-intent shape).
   // Flatten across intents; fall back to legacy flat fields for older sessions.
   const resolvedIntents: any[] = session?.resolved_intents ?? [];
-  const cartItems = resolvedIntents.length > 0
-    ? resolvedIntents.flatMap((g: any) => g.cart ?? [])
-    : (session?.cart_items || session?.cart || []);
-  const unavailableItems = resolvedIntents.length > 0
-    ? resolvedIntents.flatMap((g: any) => g.unavailable_items ?? [])
-    : (session?.unavailable_items ?? []);
-  const intentSummary = resolvedIntents.map((g: any) => g.context_summary).filter(Boolean).join(" · ");
-  const intentTypeLabel = resolvedIntents.map((g: any) => g.intent_type).filter(Boolean).join(", ");
+  const cartItems =
+    resolvedIntents.length > 0
+      ? resolvedIntents.flatMap((g: any) => g.cart ?? [])
+      : session?.cart_items || session?.cart || [];
+  const unavailableItems =
+    resolvedIntents.length > 0
+      ? resolvedIntents.flatMap((g: any) => g.unavailable_items ?? [])
+      : (session?.unavailable_items ?? []);
+  const intentSummary = resolvedIntents
+    .map((g: any) => g.context_summary)
+    .filter(Boolean)
+    .join(" · ");
+  const intentTypeLabel = resolvedIntents
+    .map((g: any) => g.intent_type)
+    .filter(Boolean)
+    .join(", ");
   const budget = session?.budget_inr || 1500;
-  const total = session?.total_price_inr || cartItems.reduce((s: number, it: any) => s + (it.total_price_inr || 0), 0);
+  const total =
+    session?.total_price_inr ||
+    cartItems.reduce((s: number, it: any) => s + (it.total_price_inr || 0), 0);
   const budgetPct = Math.min(100, (total / budget) * 100);
 
   if (loading) {
@@ -73,7 +96,9 @@ function CartPage() {
       <AppShell>
         <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center gap-4 text-center">
           <div className="text-lg font-semibold">Cart not found</div>
-          <div className="text-sm text-muted-foreground">{error || "This session does not exist."}</div>
+          <div className="text-sm text-muted-foreground">
+            {error || "This session does not exist."}
+          </div>
         </div>
       </AppShell>
     );
@@ -111,12 +136,15 @@ function CartPage() {
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">{it.brand}</span>
                       {it.substituted && (
-                        <span className="rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-medium text-success">Substituted</span>
+                        <span className="rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-medium text-success">
+                          Substituted
+                        </span>
                       )}
                     </div>
                     <div className="mt-0.5 truncate text-base font-medium">{it.name}</div>
                     <div className="mt-1 text-xs text-muted-foreground">
-                      {it.quantity_units} × {it.unit_quantity}{it.unit}
+                      {it.quantity_units} × {it.unit_quantity}
+                      {it.unit}
                     </div>
 
                     {/* Why */}
@@ -131,20 +159,26 @@ function CartPage() {
                   </div>
                   <div className="shrink-0 text-right">
                     <div className="text-lg font-semibold">₹{it.total_price_inr}</div>
-                    <div className="text-xs text-muted-foreground">₹{it.price_per_unit_inr}/unit</div>
+                    <div className="text-xs text-muted-foreground">
+                      ₹{it.price_per_unit_inr}/unit
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
 
             {/* Unavailable items */}
-            {(unavailableItems.length > 0) && (
+            {unavailableItems.length > 0 && (
               <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
-                <div className="mb-3 text-xs font-medium uppercase tracking-wider text-destructive">Unavailable items</div>
+                <div className="mb-3 text-xs font-medium uppercase tracking-wider text-destructive">
+                  Unavailable items
+                </div>
                 {unavailableItems.map((it: any, idx: number) => (
                   <div key={idx} className="flex items-center gap-2 py-1.5 text-sm">
                     <span className="font-medium">{it.name}</span>
-                    <span className="text-xs text-muted-foreground">— {it.reason?.replace(/_/g, " ")}</span>
+                    <span className="text-xs text-muted-foreground">
+                      — {it.reason?.replace(/_/g, " ")}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -180,14 +214,21 @@ function CartPage() {
                   <Sparkles className="h-4 w-4 text-brand" />
                   <span className="font-medium">Summary</span>
                 </div>
-                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{session.summary}</p>
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                  {session.summary}
+                </p>
               </div>
             )}
 
             <div className="rounded-2xl border border-border bg-card p-5">
               <div className="text-sm font-medium">Final review</div>
               <ul className="mt-3 space-y-2 text-xs text-muted-foreground">
-                {["Assumptions look right", "Quantities match attendees", "Budget within range", "Reviewed alternatives"].map((q) => (
+                {[
+                  "Assumptions look right",
+                  "Quantities match attendees",
+                  "Budget within range",
+                  "Reviewed alternatives",
+                ].map((q) => (
                   <li key={q} className="flex items-center gap-2">
                     <Check className="h-3.5 w-3.5 text-brand" />
                     {q}
@@ -204,10 +245,18 @@ function CartPage() {
 
       {/* CompareCart modal */}
       {compareOpen && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-4" onClick={() => setCompareOpen(false)}>
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-pop">
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-4"
+          onClick={() => setCompareOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-pop"
+          >
             <div className="text-lg font-semibold">CompareCart — What if?</div>
-            <p className="mt-1 text-sm text-muted-foreground">Tweak inputs to see how your cart changes.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Tweak inputs to see how your cart changes.
+            </p>
 
             <div className="mt-5">
               <div className="flex items-center justify-between text-xs">
@@ -236,15 +285,29 @@ function CartPage() {
               </div>
               <div className="flex items-center justify-between rounded-lg bg-surface px-3 py-2">
                 <span className="text-muted-foreground">Status</span>
-                <span className={`font-semibold ${total > whatIfBudget ? "text-destructive" : "text-success"}`}>
-                  {total > whatIfBudget ? `₹${total - whatIfBudget} over` : `₹${whatIfBudget - total} under`}
+                <span
+                  className={`font-semibold ${total > whatIfBudget ? "text-destructive" : "text-success"}`}
+                >
+                  {total > whatIfBudget
+                    ? `₹${total - whatIfBudget} over`
+                    : `₹${whatIfBudget - total} under`}
                 </span>
               </div>
             </div>
 
             <div className="mt-6 flex justify-end gap-2">
-              <button onClick={() => setCompareOpen(false)} className="h-10 rounded-lg border border-border bg-background px-4 text-sm hover:bg-surface">Close</button>
-              <button onClick={() => setCompareOpen(false)} className="h-10 rounded-lg bg-foreground px-4 text-sm font-medium text-background hover:bg-foreground/90">Apply changes</button>
+              <button
+                onClick={() => setCompareOpen(false)}
+                className="h-10 rounded-lg border border-border bg-background px-4 text-sm hover:bg-surface"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => setCompareOpen(false)}
+                className="h-10 rounded-lg bg-foreground px-4 text-sm font-medium text-background hover:bg-foreground/90"
+              >
+                Apply changes
+              </button>
             </div>
           </div>
         </div>

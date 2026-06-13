@@ -1,5 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, FileText, Image as ImageIcon, Link as LinkIcon, MessageSquare, Sparkles, Type } from "lucide-react";
+import {
+  ArrowRight,
+  FileText,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  MessageSquare,
+  Sparkles,
+  Type,
+} from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { featureBento, occasions, samplePrompts } from "@/lib/mock/needspeak";
 
@@ -7,9 +15,16 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "NeedSpeak — Turn any context into a shopping cart" },
-      { name: "description", content: "NeedSpeak converts text, recipes, images, WhatsApp messages, and PDFs into ready-to-review shopping carts with smart quantities, budget control, and alternatives." },
+      {
+        name: "description",
+        content:
+          "NeedSpeak converts text, recipes, images, WhatsApp messages, and PDFs into ready-to-review shopping carts with smart quantities, budget control, and alternatives.",
+      },
       { property: "og:title", content: "NeedSpeak — Context becomes cart" },
-      { property: "og:description", content: "From 'IPL finals, 10 people, ₹1500' to a complete cart in seconds." },
+      {
+        property: "og:description",
+        content: "From 'IPL finals, 10 people, ₹1500' to a complete cart in seconds.",
+      },
     ],
   }),
   component: Landing,
@@ -39,7 +54,8 @@ function Landing() {
             into a <span className="text-brand">shopping cart.</span>
           </h1>
           <p className="mt-5 max-w-2xl text-pretty text-lg text-muted-foreground">
-            Tell NeedSpeak what you're planning — a watch party, a recipe, a trip — and get a ready-to-review cart with smart quantities, budget control, and alternatives.
+            Tell NeedSpeak what you're planning — a watch party, a recipe, a trip — and get a
+            ready-to-review cart with smart quantities, budget control, and alternatives.
           </p>
 
           {/* Prompt box */}
@@ -62,7 +78,10 @@ function Landing() {
             </div>
             <div className="mt-3 flex flex-wrap gap-2 px-2 pb-1">
               {inputTypes.map((t) => (
-                <span key={t.label} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs text-muted-foreground">
+                <span
+                  key={t.label}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs text-muted-foreground"
+                >
                   <t.icon className="h-3.5 w-3.5" />
                   {t.label}
                 </span>
@@ -91,9 +110,13 @@ function Landing() {
           <div className="flex items-end justify-between">
             <div>
               <h2 className="text-2xl font-semibold tracking-tight">Start from an occasion</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Predefined templates powered by the same engine.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Predefined templates powered by the same engine.
+              </p>
             </div>
-            <Link to="/occasions" className="text-sm font-medium text-foreground hover:text-brand">See all →</Link>
+            <Link to="/occasions" className="text-sm font-medium text-foreground hover:text-brand">
+              See all →
+            </Link>
           </div>
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {occasions.map((o) => (
@@ -114,18 +137,27 @@ function Landing() {
       {/* Feature bento */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-semibold tracking-tight">Everything in one engine</h2>
-        <p className="mt-2 max-w-2xl text-muted-foreground">14 capabilities working together — extraction, quantity reasoning, budget control, alternatives, collaboration and review.</p>
+        <p className="mt-2 max-w-2xl text-muted-foreground">
+          14 capabilities working together — extraction, quantity reasoning, budget control,
+          alternatives, collaboration and review.
+        </p>
         <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {featureBento.map((f, i) => (
             <div
               key={f.title}
               className={`rounded-xl border border-border bg-card p-5 ${i === 0 ? "lg:col-span-2 lg:row-span-2 bg-foreground text-background" : ""}`}
             >
-              <div className={`text-xs font-medium uppercase tracking-wider ${i === 0 ? "text-brand" : "text-muted-foreground"}`}>
+              <div
+                className={`text-xs font-medium uppercase tracking-wider ${i === 0 ? "text-brand" : "text-muted-foreground"}`}
+              >
                 {String(i + 1).padStart(2, "0")}
               </div>
               <div className="mt-2 text-lg font-semibold">{f.title}</div>
-              <p className={`mt-2 text-sm ${i === 0 ? "text-background/70" : "text-muted-foreground"}`}>{f.desc}</p>
+              <p
+                className={`mt-2 text-sm ${i === 0 ? "text-background/70" : "text-muted-foreground"}`}
+              >
+                {f.desc}
+              </p>
             </div>
           ))}
         </div>
@@ -134,8 +166,12 @@ function Landing() {
       {/* CTA */}
       <section className="mx-auto max-w-5xl px-4 pb-24 sm:px-6 lg:px-8">
         <div className="rounded-3xl border border-border bg-foreground p-10 text-background sm:p-14">
-          <h3 className="text-3xl font-semibold tracking-tight">Stop building lists. Start describing.</h3>
-          <p className="mt-3 max-w-xl text-background/70">Describe the moment — NeedSpeak figures out what to buy, how much, and where to save.</p>
+          <h3 className="text-3xl font-semibold tracking-tight">
+            Stop building lists. Start describing.
+          </h3>
+          <p className="mt-3 max-w-xl text-background/70">
+            Describe the moment — NeedSpeak figures out what to buy, how much, and where to save.
+          </p>
           <Link
             to="/chat"
             className="mt-8 inline-flex h-11 items-center gap-2 rounded-lg bg-brand px-5 text-sm font-medium text-brand-foreground hover:bg-brand/90"
