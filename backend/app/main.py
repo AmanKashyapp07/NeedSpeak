@@ -82,8 +82,10 @@ async def lifespan(app: FastAPI):
     logger.info("=" * 50)
     logger.info("Context-to-Cart starting up...")
     logger.info(f"  Mock Mode: {'ON' if config.MOCK_MODE else 'OFF'}")
+    logger.info(f"  Mock AWS:  {'ON' if config.MOCK_AWS else 'OFF'}")
     logger.info(f"  Region:    {config.AWS_REGION}")
-    logger.info(f"  Model:     {config.BEDROCK_MODEL_ID}")
+    logger.info(f"  Provider:  {config.LLM_PROVIDER}")
+    logger.info(f"  Model:     {config.GEMINI_MODEL_ID if config.LLM_PROVIDER == 'gemini' else config.BEDROCK_MODEL_ID}")
     logger.info("=" * 50)
 
     products = load_all_products()
